@@ -43,10 +43,10 @@ function legacySection(s,d,r) {
     const wide=media(s.image,r),tall=media(s.portrait||s.image,r);
     const pic=wide||tall?'<picture><source media="(max-width:700px) and (orientation:portrait)" srcset="'+tall+'"><img alt="" src="'+(wide||tall)+'"></picture>':'';
     const movie=s.mode==='video' && (s.wide||s.tall)?'<video muted playsinline loop preload="metadata" data-wide="'+media(s.wide||s.tall,r)+'" data-tall="'+media(s.tall||s.wide,r)+'"></video>':'';
-    return '<section class="hero" id="'+esc(s.id)+'" style="--desktop:'+Math.min(100,Math.max(30,+s.height||90))+'svh;--mobile:'+Math.min(100,Math.max(30,+s.mobileHeight||82))+'svh;--fit:'+(s.fit==='contain'?'contain':'cover')+'">'+pic+movie+'<div class="hero-copy"><p>'+esc(s.text)+'</p><h1>'+esc(s.title)+'</h1>'+button(s.button,link(s.url))+'</div>'+(movie?'<button class="film-control" hidden>Play film</button>':'')+'</section>';
+    return '<section class="hero" id="'+esc(s.id)+'" style="--desktop:'+Math.min(100,Math.max(30,+s.height||90))+'svh;--mobile:'+Math.min(100,Math.max(30,+s.mobileHeight||82))+'svh;--fit:'+(s.fit==='contain'?'contain':'cover')+'">'+pic+movie+'<div class="hero-copy"><p>'+esc(s.text)+'</p><h1>'+esc(s.title)+'</h1>'+button(s.button,link(s.url))+'</div>'+'</section>';
   }
   if (s.type==='projects') return start+title+copy+'<div class="cards">'+d.projects.map(p=>'<article class="card">'+(p.cover?'<a href="'+esc(p.slug)+'.html"><img loading="lazy" alt="'+esc(p.name)+'" src="'+media(p.cover,r)+'"></a>':'')+'<small>'+esc(p.type)+'</small><h3><a href="'+esc(p.slug)+'.html">'+esc(p.name)+'</a></h3><p>'+esc(p.location)+'</p>'+(p.price?'<strong>'+esc(p.price)+'</strong>':'')+'<div class="actions">'+button('View project',esc(p.slug)+'.html')+button(p.price?'Ask about availability':'Ask price',wa(d,'Hello '+d.brand+', please share the current price and availability for '+p.name+'.'),'plain')+'</div></article>').join('')+'</div></section>';
-  if (s.type==='help') return start+'<video class="texture" src="'+media('assets/texture.mp4',r)+'" poster="'+media('assets/texture.jpg',r)+'" muted playsinline loop preload="none"></video><div class="help-inner">'+title+copy+'<div class="help-links">'+(s.actions||[]).map(a=>button(a.label+' ↗',wa(d,'Hello '+d.brand+', '+a.message),'')).join('')+'</div></div><button class="film-control" hidden>Play texture</button></section>';
+  if (s.type==='help') return start+'<video class="texture" src="'+media('assets/texture.mp4',r)+'" poster="'+media('assets/texture.jpg',r)+'" muted playsinline loop preload="none"></video><div class="help-inner">'+title+copy+'<div class="help-links">'+(s.actions||[]).map(a=>button(a.label+' ↗',wa(d,'Hello '+d.brand+', '+a.message),'')).join('')+'</div></div></section>';
   if (s.type==='contact') return start+title+copy+'<form class="visit-form" action="https://wa.me/'+esc(d.phone)+'" method="get"><label>Which project?<select name="text">'+['Help me choose',...d.projects.map(p=>p.name)].map(n=>'<option>'+esc(n)+'</option>').join('')+'</select></label><label>Preferred day or question <small>(optional)</small><input maxlength="350" placeholder="For example, Sunday after 11 am"></label><button class="button">Request a visit on WhatsApp ↗</button></form></section>';
   return start+(s.title?title:'')+copy+(s.image?'<img class="story-img" alt="" src="'+media(s.image,r)+'">':'')+custom(s.code,s.codeHeight)+button(s.button,link(s.url))+'</section>';
 }
@@ -95,7 +95,7 @@ function section(s,d,r){
   if(!slides.length)slides=['terrace','glass','roof'].map(f=>'<figure>'+photo('assets/'+f+'.jpg',r,'True Homes architecture film still')+'<figcaption>True Homes<small>From the brand film</small></figcaption></figure>');
   return open+'<div class="section-title">'+heading+intro+'</div>'+carousel(slides,'inset','Project photos',true)+'</section>';
  }
- if(s.type==='help')return open+'<video class="texture" muted playsinline loop preload="none" poster="'+media('assets/texture.jpg',r)+'" src="'+media('assets/texture.mp4',r)+'"></video><div class="texture-content">'+heading+intro+'<div class="marks">'+(s.actions||[]).map((a,i)=>'<a href="'+wa(d,'Hello '+d.brand+', '+a.message)+'">'+icon(['price','pin','photo'][i%3])+'<span>'+esc(a.label)+'</span></a>').join('')+'</div></div><button class="film-control" hidden>Play texture</button></section>';
+ if(s.type==='help')return open+'<video class="texture" muted playsinline loop preload="none" poster="'+media('assets/texture.jpg',r)+'" src="'+media('assets/texture.mp4',r)+'"></video><div class="texture-content">'+heading+intro+'<div class="marks">'+(s.actions||[]).map((a,i)=>'<a href="'+wa(d,'Hello '+d.brand+', '+a.message)+'">'+icon(['price','pin','photo'][i%3])+'<span>'+esc(a.label)+'</span></a>').join('')+'</div></div></section>';
  if(s.type==='contact')return open+'<div class="connect-intro"><h2>Connect with <strong>'+esc(d.brand)+'</strong></h2></div><div class="contact-body">'+heading+intro+'<form class="visit-form" action="https://wa.me/'+esc(d.phone)+'"><label>Which project?<select name="text">'+['Help me choose',...d.projects.map(p=>p.name)].map(n=>'<option>'+esc(n)+'</option>').join('')+'</select></label><label>Preferred day or question<input maxlength="350" placeholder="For example, Sunday after 11 am"></label><button class="glass-action">Request a visit on WhatsApp</button></form></div></section>';
  return legacySection(s,d,r);
 }
@@ -111,6 +111,17 @@ function detail(p,d,r){
  '<section class="detail-chapter"><h2>Project details</h2><dl>'+facts.map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+button('Open Google Maps ↗',link(p.maps),'glass-action')+'</section>'+plans+
  (p.code?custom(p.code,p.codeHeight):'')+'<section class="detail-chapter interest"><h2>Register your interest</h2>'+button('Book a site visit',visit,'glass-action')+'</section></article>';
 }
+export const visualDefaults=Object.freeze({blur:20,tint:46,radius:18,accent:'#d5dfef',heading:'modern',motion:'standard',speed:'normal',slides:'auto',interval:6,header:'scroll'});
+function visualSettings(d){
+ const a={...visualDefaults,...d.appearance};
+ function number(key,min,max){
+   const value=Number(a[key]);
+   return Number.isFinite(value)?Math.min(max,Math.max(min,value)):visualDefaults[key];
+ }
+ const accent=/^#[0-9a-f]{6}$/i.test(a.accent)?a.accent:visualDefaults.accent;
+ const speed=({fast:0.65,normal:1,slow:1.5})[a.speed]||1;
+ return 'data-motion="'+(a.motion==='still'?'still':a.motion==='subtle'?'subtle':'standard')+'" data-auto="'+(a.slides!=='manual')+'" data-interval="'+number('interval',2,20)+'" data-header="'+(a.header==='fixed'?'fixed':'scroll')+'" style="--glass-blur:'+number('blur',0,40)+'px;--glass-tint:'+number('tint',20,88)+'%;--glass-radius:'+number('radius',0,36)+'px;--glass-accent:'+accent+';--motion-time:'+Math.round(450*speed)+'ms;--title-font:'+(a.heading==='serif'?'Georgia,serif':a.heading==='wide'?'Verdana,sans-serif':'Arial,sans-serif')+'"';
+}
 export function render(d,page='index',r=x=>x){
  const p=d.projects.find(p=>p.slug===page), name=esc(d.brand);
  const logo='<a class="brand" href="index.html" aria-label="'+name+' home">'+(d.logo?'<img src="'+media(d.logo,r)+'" alt="'+name+'">':name)+'</a>';
@@ -120,8 +131,9 @@ export function render(d,page='index',r=x=>x){
  const projects=d.sections.find(s=>s.type==='projects'),visits=d.sections.find(s=>s.type==='contact');
  const quick=(label,to,k)=>'<a aria-label="'+label+'" title="'+label+'" href="'+to+'">'+icon(k)+'<span>'+label+'</span></a>';
  const dock='<nav class="dock '+(p?'round':'')+'" aria-label="Quick actions">'+(projects&&!p?quick('Projects','index.html#'+esc(projects.id),'projects'):'')+quick('WhatsApp',general,'chat')+quick('Site visit',p?wa(d,'Hello, I would like to visit '+p.name+'.'):visits?'index.html#'+esc(visits.id):general,'visit')+'</nav>';
- return '<!doctype html><html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>'+(p?esc(p.name)+' | ':'')+name+' | Siliguri</title><meta name="description" content="'+esc(p?p.about:'Explore properties in Siliguri and arrange a site visit on WhatsApp.')+'"><meta name="theme-color" content="#080808"><link rel="stylesheet" href="store.css"><script defer src="store.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header class="mast">'+logo+'<div><button data-panel="search" aria-label="Search projects">'+icon('search')+'</button><button data-panel="navigation" aria-label="Open menu">'+icon('menu')+'</button></div></header>'+
+ return '<!doctype html><html lang="en-IN" '+visualSettings(d)+'><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>'+(p?esc(p.name)+' | ':'')+name+' | Siliguri</title><meta name="description" content="'+esc(p?p.about:'Explore properties in Siliguri and arrange a site visit on WhatsApp.')+'"><meta name="theme-color" content="#080808"><link rel="icon" href="'+media(d.favicon||'assets/favicon.png',r)+'"><link rel="stylesheet" href="store.css"><script defer src="store.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header class="mast">'+logo+'<div><button data-panel="search" aria-label="Search projects">'+icon('search')+'</button><button data-panel="navigation" aria-label="Open menu">'+icon('menu')+'</button></div></header>'+
  pane('navigation','Navigation','<nav class="sheet-links">'+links+options+'</nav><a class="sheet-contact" href="'+general+'">WhatsApp ↗</a>',logo)+
  pane('search','Search projects','<div class="find"><label for="query">Search projects</label><input id="query" type="search" placeholder="Project name or location"><div class="results">'+options+'</div><p id="empty" hidden>No projects found.</p></div>',logo)+
  '<main id="main">'+(p?detail(p,d,r):d.sections.map(s=>section(s,d,r)).join(''))+'</main><footer>'+logo+'<nav>'+links+'</nav><a href="'+general+'">WhatsApp +'+esc(d.phone)+'</a><p>Siliguri, West Bengal</p></footer>'+dock+'</body></html>';
 }
+

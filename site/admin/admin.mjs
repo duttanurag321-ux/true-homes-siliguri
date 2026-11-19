@@ -1,7 +1,7 @@
-import {render,validate} from './render.mjs';
+import {render,validate,visualDefaults} from './render.mjs';
 import {repository} from './github.mjs';
 const $=s=>document.querySelector(s);
-const tabs=['Overview','Brand & menu','Homepage','Projects'];
+const tabs=['Overview','Brand & menu','Homepage','Projects','Appearance'];
 let data, original, repo, head, db, busy=false, tab='Overview', selected='', dragging=null;
 let pending=new Map(), urls=new Map(), draftWrites=Promise.resolve();
 const note=text=>$('#status').textContent=text;
@@ -31,7 +31,7 @@ function controls(parent,list,index,thing){
  const row=el('div','','tools');row.append(button('↑',()=>move(list,index,index-1)),button('↓',()=>move(list,index,index+1)),button('Remove',()=>{if(confirm('Remove '+thing+' from this draft?')){list.splice(index,1);save();draw();}},'danger'));parent.append(row);
 }
 function resolve(path){return urls.get(path)||path;}
-const types={image:{jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',gif:'image/gif',avif:'image/avif'},video:{mp4:'video/mp4',webm:'video/webm'}};
+const types={icon:{png:'image/png',ico:'image/x-icon',webp:'image/webp'},image:{jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',gif:'image/gif',avif:'image/avif'},video:{mp4:'video/mp4',webm:'video/webm'}};
 function mediaField(parent,label,obj,key,kind='image',multi=false){
  const area=el('div','','subcard');parent.append(area);
  const allowed=kind==='plan'?{...types.image,pdf:'application/pdf'}:types[kind];
@@ -69,6 +69,25 @@ function overview(panel){
  const pub=box(panel,'Save and publish');pub.append(el('p','Changes are saved on this browser as a draft. Preview them, then connect GitHub and publish when you are ready.'));
  pub.append(button(repo?'Disconnect GitHub':'Connect GitHub',()=>{if(repo){repo=null;head=null;draw();}else $('#login').showModal();}));
  const util=box(panel,'Draft tools');util.append(button('Download content JSON',()=>{const a=el('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='true-homes-content.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);}),el('p','The download contains text and file paths. New media stay in this browser until published.','hint'),button('Discard draft and reload latest',async()=>{if(!confirm('Discard this device’s draft and its unpublished uploads?'))return;try{const live=repo?await repo.load():{data:await publicData()};data=live.data;original=structuredClone(data);head=live.sha||null;for(const u of urls.values())URL.revokeObjectURL(u);urls.clear();pending.clear();save();draw();note('Latest version loaded.');}catch(e){note(e.message);}}));
+}
+function appearance(panel){
+ panel.append(el('h1','Appearance'));
+ const a=data.appearance={...visualDefaults,...data.appearance};
+ const glass=box(panel,'Glass surfaces');
+ glass.append(el('p','Adjust the header, menus, buttons and floating controls. Use Preview to check the result over your own project photos.'));
+ field(glass,'Frost / blur (0–40 px)',a,'blur',{num:[0,40]});
+ field(glass,'Dark tint (20–88%)',a,'tint',{num:[20,88]});
+ field(glass,'Corner radius (0–36 px)',a,'radius',{num:[0,36]});
+ field(glass,'Glass highlight colour',a,'accent').type='color';
+ field(glass,'Heading style',a,'heading',{choices:[['modern','Modern sans serif'],['serif','Classic serif'],['wide','Wide sans serif']]});
+ const motion=box(panel,'Animation and scrolling');
+ field(motion,'Page effects',a,'motion',{choices:[['standard','Cinematic movement'],['subtle','Gentle fades'],['still','Still — no automatic motion']]});
+ field(motion,'Transition speed',a,'speed',{choices:[['fast','Fast'],['normal','Normal'],['slow','Slow']]});
+ field(motion,'Project slides',a,'slides',{choices:[['auto','Automatic'],['manual','Swipe or use arrows']]});
+ field(motion,'Seconds between automatic slides (2–20)',a,'interval',{num:[2,20]});
+ field(motion,'Header behaviour',a,'header',{choices:[['scroll','Hide on scroll down'],['fixed','Always visible']]});
+ const identity=box(panel,'Browser tab icon');
+ mediaField(identity,'Favicon',data,'favicon','icon');identity.append(el('p','Use a square PNG, WebP or ICO. The True Homes symbol is the default.','hint'));
 }
 function brand(panel){
  panel.append(el('h1','Brand & menu'));const b=box(panel,'Brand settings');field(b,'Company name',data,'brand');mediaField(b,'Logo',data,'logo');field(b,'WhatsApp number including country code',data,'phone');
@@ -135,7 +154,7 @@ function draw(){
    if(JSON.stringify(original)!==JSON.stringify(data)){b.append(el('p','Your saved draft is waiting on this device.','hint'),button('Export draft text',()=>{const a=el('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)]));a.download='true-homes-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}),button('Discard saved draft',async()=>{if(confirm('Discard this device’s saved draft and uploads?')){const fresh=await publicData();data=fresh;original=structuredClone(fresh);pending.clear();for(const u of urls.values())URL.revokeObjectURL(u);urls.clear();save();draw();}}));}
    return;
  }
- [overview,brand,homepage,projects][tabs.indexOf(tab)](panel);
+ [overview,brand,homepage,projects,appearance][tabs.indexOf(tab)](panel);
 }
 let previewHTML='';
 function updateFrame(){
@@ -191,4 +210,5 @@ async function start(){
  draw();note('Draft on this device. Only Publish changes the repository.');
 }
 start().catch(e=>note('Editor could not start. Open /admin/ on the hosted site in a browser with local storage enabled. '+e.message));
+
 

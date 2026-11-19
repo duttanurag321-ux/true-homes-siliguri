@@ -21,3 +21,45 @@
   @keyframes light-pass{from{background-position:20% 0}to{background-position:80% 85%}}
  }
 }
+
+
+/* Frosted surfaces share one tint, highlight and corner treatment across pages. */
+:root{
+ --glass-base:rgb(24 28 34 / var(--glass-tint,46%));
+ --glass-border:color-mix(in srgb,var(--glass-accent,#d5dfef) 43%,transparent);
+ --glass-sheen:linear-gradient(145deg,rgb(255 255 255 / .22),rgb(255 255 255 / .04) 30%,transparent 60%,rgb(255 255 255 / .10));
+ --glass-shadow:inset 0 1px 0 #ffffff70,inset 0 -1px 0 #ffffff12,0 6px 22px #0003;
+}
+h1,h2,h3{font-family:var(--title-font,Arial,sans-serif)}
+.mast,.mast.solid,.sheet,.button,.glass-action,.dock a,.dock.round a,.arrow,.cycle,.mast button,.sheet-top button,.sheet-contact,.marks a,.find,.contact-body,.plan,.results a,.sheet-links a,.visit-form select,.visit-form input,.dots{
+ background:var(--glass-base) var(--glass-sheen);
+ border:1px solid var(--glass-border);
+ border-radius:var(--glass-radius,18px);
+ -webkit-backdrop-filter:blur(var(--glass-blur,20px)) saturate(150%);
+ backdrop-filter:blur(var(--glass-blur,20px)) saturate(150%);
+ box-shadow:var(--glass-shadow);
+ color:#fff;
+}
+.mast,.mast.solid{inset:max(8px,env(safe-area-inset-top)) clamp(10px,2vw,34px) auto;height:clamp(48px,6vw,66px);padding:0 clamp(13px,2.5vw,40px)}
+.mast.away{transform:translateY(calc(-100% - 42px - env(safe-area-inset-top)))}
+.mast:focus-within{transform:none}.mast>div{gap:6px}.mast button,.sheet-top button{width:36px;height:36px}.mast svg,.sheet-top svg{width:19px;height:19px}
+.sheet{background-color:rgb(18 22 28 / clamp(60%,var(--glass-tint),90%));border-radius:var(--glass-radius) 0 0 var(--glass-radius)}
+.sheet::backdrop{background:#04060959;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.sheet-links{align-content:center}.sheet-links a{padding:9px 16px}.sheet-contact{margin:0 var(--pad) max(15px,env(safe-area-inset-bottom));padding:14px}
+.find,.contact-body{width:min(calc(100% - 28px),740px);margin:clamp(16px,4vw,52px) auto;padding:clamp(18px,4vw,46px)}
+.results a{margin-top:8px;padding:12px 16px}.marks a{padding:16px}.visit-form input,.visit-form select{padding:12px;margin-top:7px}
+.arrow{width:40px;height:44px;filter:none}.arrow:before{width:14px;height:14px}.dots{padding:0 4px}.inset .dots{top:calc(var(--frame) - 42px);height:32px}
+.plan{padding:12px}.button:hover,.glass-action:hover,.dock a:hover,.marks a:hover,.sheet-links a:hover,.arrow:hover{background-color:color-mix(in srgb,var(--glass-accent) 27%,#1c2026)}
+@supports not (backdrop-filter:blur(2px)){.mast,.sheet,.button,.glass-action,.dock a,.contact-body,.marks a,.arrow,.sheet-links a{background-color:rgb(28 31 36 / .86)}}
+html[data-motion=still]{scroll-behavior:auto}
+html[data-motion=still] *,html[data-motion=still] *::before,html[data-motion=still] *::after{animation:none!important;transition:none!important}
+html[data-motion=still] .scene .backdrop,html[data-motion=subtle] .scene .backdrop{transform:none}
+html[data-motion=subtle] .scene-copy,html[data-motion=subtle] .inset-photo,html[data-motion=subtle] .reveal{translate:none;transform:none}
+html[data-motion=subtle] .sheet[open],html[data-motion=subtle] .sheet[open] .sheet-links a{animation-name:glass-fade}
+html[data-motion=subtle] .detail-hero .backdrop,html[data-motion=subtle] .connect-intro,html[data-motion=subtle] .connect-intro h2{animation:none}
+@keyframes glass-fade{from{opacity:.25}to{opacity:1}}
+@media(prefers-reduced-motion:no-preference){
+ .sheet[open],.sheet[open] .sheet-links a{animation-duration:var(--motion-time,450ms)}
+ .mast,.scene-copy,.inset-photo,.reveal{transition-duration:var(--motion-time,450ms)}
+}
+@media(prefers-reduced-motion:reduce){.mast,.sheet,.scene-copy,.reveal{transition:none}.reveal.waiting{opacity:1;transform:none}}
