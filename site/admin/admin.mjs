@@ -75,7 +75,7 @@ function brand(panel){
  const nav=box(panel,'Menu links');data.menu.forEach((m,i)=>{const div=el('div','','subcard');nav.append(div);field(div,'Label',m,'label');destination(div,m,'url');controls(div,data.menu,i,'this menu link');});
  nav.append(button('Add menu link',()=>{data.menu.push({label:'New link',url:'index.html'});save();draw();}));
 }
-const captions={hero:'Hero banner',projects:'Project list',help:'WhatsApp quick links',contact:'Site visit form',text:'Text and image',custom:'Custom HTML'};
+const captions={hero:'Hero banner',projects:'Project showcase',gallery:'Project photo gallery',spotlight:'Featured project carousel',help:'WhatsApp quick links',contact:'Site visit form',text:'Text and image',custom:'Custom HTML'};
 function codeFields(b,obj){field(b,'Custom HTML and CSS',obj,'code',{long:true,code:true,placeholder:'Paste an HTML section or page here'});field(b,'Code area height (pixels)',obj,'codeHeight',{num:[100,4000]});b.append(el('p','Paste clean HTML with its CSS. Code runs in an isolated frame. Use the button link field for navigation outside the frame.','hint'));}
 function homepage(panel){
  panel.append(el('h1','Homepage editor'),el('p','Open a section to edit it. Drag its handle to change the order, or use the arrows.'));
@@ -191,3 +191,4 @@ async function start(){
  draw();note('Draft on this device. Only Publish changes the repository.');
 }
 start().catch(e=>note('Editor could not start. Open /admin/ on the hosted site in a browser with local storage enabled. '+e.message));
+

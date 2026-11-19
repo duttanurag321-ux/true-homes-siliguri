@@ -12,6 +12,14 @@
       "url": "index.html#projects"
     },
     {
+      "label": "Project gallery",
+      "url": "index.html#gallery"
+    },
+    {
+      "label": "Featured projects",
+      "url": "index.html#featured"
+    },
+    {
       "label": "Site visit",
       "url": "index.html#visit"
     }
@@ -68,8 +76,8 @@
       "tall": "assets/hero-mobile.mp4.mp4",
       "image": "assets/cover-wide.jpg",
       "portrait": "assets/cover-tall.jpg",
-      "height": 90,
-      "mobileHeight": 82,
+      "height": 100,
+      "mobileHeight": 100,
       "fit": "cover"
     },
     {
@@ -77,6 +85,12 @@
       "type": "projects",
       "title": "Our projects",
       "text": "Choose a project to see its location or ask for the latest price."
+    },
+    {
+      "type": "gallery",
+      "id": "gallery",
+      "title": "Project gallery",
+      "text": ""
     },
     {
       "id": "help",
@@ -97,6 +111,12 @@
           "message": "Please send available project photos and plans."
         }
       ]
+    },
+    {
+      "type": "spotlight",
+      "id": "featured",
+      "title": "Featured projects",
+      "text": ""
     },
     {
       "id": "visit",
