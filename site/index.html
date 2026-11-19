@@ -12,12 +12,14 @@
 </head>
 <body>
 <a class="skip" href="#projects">Skip to projects</a>
-<header class="mast">
-<a href="#home" aria-label="True Homes home"><img class="logo" src="assets/wordmark.png" alt="True Homes"></a>
-<nav class="wide-nav" aria-label="Main navigation"><a href="#projects">Projects</a><a href="#gallery">Gallery</a><a href="#interest">Enquire</a></nav>
-<button id="menu-button" class="menu-toggle" aria-expanded="false" aria-controls="menu" aria-label="Open menu"><i></i><i></i></button>
-</header>
-<nav id="menu" aria-label="Mobile navigation" hidden><a href="#home">Home</a><a href="#projects">Projects</a><a href="#gallery">Gallery</a><a href="#interest">Enquire</a></nav>
+<header class="mast"><a href="index.html#home" aria-label="True Homes home"><img class="logo" src="assets/wordmark.png" alt="True Homes"></a>
+<nav class="wide-nav" aria-label="Main navigation"><a href="index.html#projects">Projects</a><a href="index.html#gallery">Gallery</a><a href="index.html#interest">Enquire</a></nav>
+<div class="nav-tools"><button class="search-icon" data-open="search-panel" aria-label="Search projects"></button><button class="menu-toggle" data-open="menu-panel" aria-label="Open menu"><i></i><i></i></button></div></header>
+<dialog id="menu-panel" aria-label="Site menu"><div class="dialog-head"><img class="logo" src="assets/wordmark.png" alt="True Homes"><button class="close" aria-label="Close menu">×</button></div>
+<nav class="drawer-nav"><a href="index.html#home">Home</a><a href="index.html#projects">Explore projects</a><a class="sub" href="riverdale-villas.html">Riverdale Villas</a><a class="sub" href="garden-villas.html">Garden Villas</a><a href="index.html#gallery">Gallery</a><a href="index.html#interest">Contact</a></nav>
+<a class="drawer-contact" href="https://wa.me/918116720125">WhatsApp · +91 81167 20125 ↗</a></dialog>
+<dialog id="search-panel" aria-label="Project search"><div class="dialog-head"><img class="logo" src="assets/wordmark.png" alt="True Homes"><button class="close" aria-label="Close search">×</button></div><label for="find-project">Search projects</label><input id="find-project" type="search" placeholder="Project or location">
+<nav class="results"><a href="riverdale-villas.html" data-terms="riverdale villas villa tarbandha siliguri bagdogra airport">Riverdale Villas <small>Tarbandha</small></a><a href="garden-villas.html" data-terms="garden villas farmhouse rangapani siliguri">Garden Villas <small>Rangapani</small></a></nav><p role="status" id="empty-result" hidden>No matching projects.</p></dialog>
 <main>
 <section class="hero" id="home" aria-label="True Homes opening film">
 <h1 class="sr">True Homes villas in Siliguri</h1>
@@ -29,9 +31,9 @@
 <section id="projects" class="showcase" aria-label="Projects in Siliguri" data-carousel>
 <div class="track" tabindex="0" aria-label="Swipe or use arrow keys to browse projects">
 <article class="slide river"><div class="slide-title"><p>Siliguri · Villa project</p><h2>Riverdale <em>Villas</em></h2></div>
-<div class="slide-foot"><p>Tarbandha, near Bagdogra Airport</p><a class="glass" href="https://wa.me/918116720125?text=Hello%20True%20Homes%2C%20please%20share%20details%20about%20Riverdale%20Villas%20in%20Tarbandha.">Enquire about Riverdale ↗</a></div></article>
+<div class="slide-foot"><p>Tarbandha, near Bagdogra Airport</p><a class="glass" href="riverdale-villas.html" aria-label="Discover Riverdale Villas">Discover the project →</a></div></article>
 <article class="slide garden"><div class="slide-title"><p>Siliguri · Farmhouse project</p><h2>Garden <em>Villas</em></h2></div>
-<div class="slide-foot"><p>Rangapani, Siliguri</p><a class="glass" href="https://wa.me/918116720125?text=Hello%20True%20Homes%2C%20please%20share%20details%20about%20Garden%20Villas%20in%20Rangapani.">Enquire about Garden Villas ↗</a></div></article>
+<div class="slide-foot"><p>Rangapani, Siliguri</p><a class="glass" href="garden-villas.html" aria-label="Discover Garden Villas">Discover the project →</a></div></article>
 </div>
 <button class="arrow prev" aria-label="Previous project"></button><button class="arrow next" aria-label="Next project"></button>
 <div class="dots" aria-label="Choose project"><button aria-label="Show Riverdale Villas" aria-pressed="true"></button><button aria-label="Show Garden Villas" aria-pressed="false"></button></div>
@@ -48,7 +50,8 @@
 <div class="dots" aria-label="Choose film still"><button aria-label="Show terrace" aria-pressed="true"></button><button aria-label="Show glazing" aria-pressed="false"></button><button aria-label="Show façade" aria-pressed="false"></button></div>
 </div></section>
 
-<section id="interest" class="interest"><div class="contact-panel"><h2><em>Express</em> your interest</h2>
+<section class="texture-section" aria-labelledby="texture-title"><video class="texture-film" muted playsinline loop preload="none" poster="assets/texture.jpg" src="assets/texture.mp4" aria-hidden="true"></video><div class="texture-copy"><p class="kicker">True Homes</p><h2 id="texture-title">Explore <em>Siliguri</em></h2><div class="location-list"><a href="riverdale-villas.html"><span>Tarbandha</span><small>Riverdale Villas ↗</small></a><a href="garden-villas.html"><span>Rangapani</span><small>Garden Villas ↗</small></a></div></div><button class="texture-toggle" hidden>Pause texture</button></section>
+<section id="interest" class="interest"><div class="contact-panel"><p class="kicker">Contact True Homes</p><h2><em>Express</em> your interest</h2>
 <form action="https://wa.me/918116720125" method="get">
 <label for="project">Project of interest</label><select id="project" name="text"><option value="Hello True Homes, please share details about both projects in Siliguri.">Both projects</option><option value="Hello True Homes, please share details about Riverdale Villas in Tarbandha.">Riverdale Villas</option><option value="Hello True Homes, please share details about Garden Villas in Rangapani.">Garden Villas</option></select>
 <button class="glass" type="submit">Continue on WhatsApp ↗</button></form>

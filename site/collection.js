@@ -1,19 +1,54 @@
-const menuButton = document.querySelector("#menu-button");
-const menu = document.querySelector("#menu");
-
-function setMenu(open) {
-  menu.hidden = !open;
-  menuButton.setAttribute("aria-expanded", String(open));
-  menuButton.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+const search = document.querySelector("#find-project");
+const results = [...document.querySelectorAll(".results a")];
+function filterProjects() {
+  const words = search.value.toLowerCase().trim().split(/\s+/);
+  for (const link of results) link.hidden = !words.every(word => link.dataset.terms.includes(word));
+  document.querySelector("#empty-result").hidden = results.some(link => !link.hidden);
 }
-menuButton.addEventListener("click", () => setMenu(menu.hidden));
-menu.addEventListener("click", () => setMenu(false));
-document.addEventListener("keydown", event => {
-  if (event.key === "Escape" && !menu.hidden) {
-    setMenu(false);
-    menuButton.focus();
+search.addEventListener("input", filterProjects);
+for (const opener of document.querySelectorAll("[data-open]")) {
+  opener.addEventListener("click", () => {
+    const panel = document.getElementById(opener.dataset.open);
+    panel.showModal();
+    if (panel.contains(search)) {
+      search.value = "";
+      filterProjects();
+      search.focus();
+    }
+  });
+}
+for (const panel of document.querySelectorAll("dialog")) {
+  panel.addEventListener("click", event => {
+    if (event.target.closest("a, .close")) panel.close();
+  });
+}
+
+const texture = document.querySelector(".texture-film");
+if (texture) {
+  const control = document.querySelector(".texture-toggle");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  let enabled = !reduced.matches;
+  let visible = false;
+  function updateTexture() {
+    control.hidden = false;
+    control.textContent = enabled ? "Pause texture" : "Play texture";
+    if (enabled && visible && !document.hidden) {
+      texture.play().catch(error => {
+        if (error.name === "NotAllowedError") {
+          enabled = false;
+          control.textContent = "Play texture";
+        }
+      });
+    } else texture.pause();
   }
-});
+  new IntersectionObserver(entries => {
+    visible = entries[0].isIntersecting;
+    updateTexture();
+  }).observe(texture);
+  control.addEventListener("click", () => {enabled = !enabled; updateTexture();});
+  reduced.addEventListener("change", () => {enabled = !reduced.matches; updateTexture();});
+  document.addEventListener("visibilitychange", updateTexture);
+}
 
 for (const carousel of document.querySelectorAll("[data-carousel]")) {
   const track = carousel.querySelector(".track");
