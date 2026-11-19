@@ -1,0 +1,105 @@
+{
+  "brand": "True Homes",
+  "logo": "assets/wordmark.png",
+  "phone": "918116720125",
+  "menu": [
+    {
+      "label": "Home",
+      "url": "index.html"
+    },
+    {
+      "label": "Projects",
+      "url": "index.html#projects"
+    },
+    {
+      "label": "Site visit",
+      "url": "index.html#visit"
+    }
+  ],
+  "projects": [
+    {
+      "name": "Riverdale Villas",
+      "slug": "riverdale-villas",
+      "type": "Villa project",
+      "location": "Tarbandha, near Bagdogra Airport, Siliguri",
+      "price": "",
+      "about": "Looking for a villa near Bagdogra Airport? Ask us about the homes available at Riverdale Villas in Tarbandha.",
+      "cover": "",
+      "photos": [],
+      "floor": [],
+      "site": [],
+      "maps": "",
+      "size": "",
+      "status": "",
+      "code": "",
+      "codeHeight": 600
+    },
+    {
+      "name": "Garden Villas",
+      "slug": "garden-villas",
+      "type": "Farmhouse project",
+      "location": "Rangapani, Siliguri",
+      "price": "",
+      "about": "Looking for a farmhouse in Rangapani? Ask us what is available at Garden Villas and arrange a time to see the site.",
+      "cover": "",
+      "photos": [],
+      "floor": [],
+      "site": [],
+      "maps": "",
+      "size": "",
+      "status": "",
+      "code": "",
+      "codeHeight": 600
+    }
+  ],
+  "sections": [
+    {
+      "id": "home",
+      "type": "hero",
+      "title": "Find a home in Siliguri",
+      "text": "Villas and farmhouse projects",
+      "button": "See our projects",
+      "url": "#projects",
+      "mode": "video",
+      "wide": "assets/hero-desktop.mp4.mp4",
+      "tall": "assets/hero-mobile.mp4.mp4",
+      "image": "assets/cover-wide.jpg",
+      "portrait": "assets/cover-tall.jpg",
+      "height": 90,
+      "mobileHeight": 82,
+      "fit": "cover"
+    },
+    {
+      "id": "projects",
+      "type": "projects",
+      "title": "Our projects",
+      "text": "Choose a project to see its location or ask for the latest price."
+    },
+    {
+      "id": "help",
+      "type": "help",
+      "title": "How can we help?",
+      "text": "Choose what you need. Your message will open in WhatsApp.",
+      "actions": [
+        {
+          "label": "Get price and availability",
+          "message": "Please send current prices and available homes in Siliguri."
+        },
+        {
+          "label": "Get the location pin",
+          "message": "Please share the project location on Google Maps."
+        },
+        {
+          "label": "Ask for photos and plans",
+          "message": "Please send available project photos and plans."
+        }
+      ]
+    },
+    {
+      "id": "visit",
+      "type": "contact",
+      "title": "Visit a property",
+      "text": "Choose the project and tell us when you would like to visit. We will confirm the time and share the location on WhatsApp."
+    }
+  ]
+}
