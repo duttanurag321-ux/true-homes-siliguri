@@ -124,5 +124,18 @@
       "title": "Visit a property",
       "text": "Choose the project and tell us when you would like to visit. We will confirm the time and share the location on WhatsApp."
     }
-  ]
+  ],
+  "appearance": {
+    "blur": 20,
+    "tint": 46,
+    "radius": 18,
+    "accent": "#d5dfef",
+    "heading": "modern",
+    "motion": "standard",
+    "speed": "normal",
+    "slides": "auto",
+    "interval": 6,
+    "header": "scroll"
+  },
+  "favicon": "uploads/fdb01d6f-f7e9-44fe-96b8-3999844c2d14-TrueHomes-Favicon.png"
 }
