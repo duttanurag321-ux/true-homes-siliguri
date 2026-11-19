@@ -140,3 +140,45 @@ section[id]{scroll-margin-top:var(--header-height)}
  @keyframes title-in{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
  @supports(animation-timeline:view()){.texture-copy,.overview>*,.gallery h2,.contact-panel h2{animation:title-in linear both;animation-timeline:view();animation-range:entry 0% entry 85%}}
 }
+.reader{padding:clamp(56px,7vw,108px) var(--pad);background:#101110;border-top:1px solid #363735}
+.reader:nth-of-type(even){background:#151614}
+.editorial{max-width:1250px;margin:auto;display:grid;grid-template-columns:minmax(200px, .82fr) minmax(0,1.4fr);gap:clamp(32px,7vw,100px)}
+.reader h2{font-size:clamp(2.1rem,4.3vw,4.5rem);line-height:1.02;text-wrap:balance}
+.reader .kicker,.guide-intro .kicker{color:#cfc1a9;line-height:1.6}
+.reading{line-height:1.65;color:#d8d6cf;max-width:740px}
+.reading>p,.steps,.checklist{margin:0 0 20px}
+.reading .lead{font-size:clamp(1.1rem,1.6vw,1.45rem);line-height:1.45;color:#f7f3e9}
+.reading a,.guide-intro nav a{color:#f4e2c6;text-decoration:underline;text-underline-offset:4px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:27px 0}
+.pair article{border-top:1px solid #706755;padding:16px 0 0}
+.pair h3,.steps dt{color:#fff;font-weight:500}
+.pair h3{font-size:1.4rem;margin:0}
+.pair .place{font-size:.78rem;color:#cabda9;margin:3px 0 12px}
+.pair a,.inline-cta{display:inline-block;margin-top:12px;padding:8px 0}
+.steps dt{margin-top:22px;font-size:1.23rem}
+.steps dd{margin:5px 0 20px}
+.links a,.reading summary{display:block;padding:16px 0;border-bottom:1px solid #454541}
+.links span{float:right}
+.reading summary{cursor:pointer;color:#fff;list-style:none;padding-right:26px;position:relative}
+.reading summary:after{content:"+";position:absolute;right:0}
+.reading details[open] summary:after{content:"−"}
+.reading details p{padding:12px 0}
+.texture-copy{background:radial-gradient(ellipse at center,#08090af7,#08090ad4 55%,transparent 74%);padding:35px 0}
+.texture-toggle{background:#111c}
+.interest textarea,.cost-fields input{display:block;width:100%;border:1px solid #605e57;border-radius:0;background:#181918;color:#fff;font:inherit;padding:12px}
+.interest textarea{margin:10px 0 20px;resize:vertical}
+.form-note{font-size:.8rem;color:#ccc;margin-top:12px}
+.guide-intro{background:linear-gradient(90deg,#121311ed,#151514bf),url(assets/roof.jpg) center/cover;padding:clamp(132px,15vw,210px) var(--pad) 66px}
+.guide-intro h1{font-size:clamp(3rem,7vw,7rem);letter-spacing:-.055em;font-weight:400;line-height:1}
+.guide-intro>p:not(.kicker){max-width:540px;line-height:1.65;margin:22px 0}
+.guide-intro nav{display:flex;gap:24px;flex-wrap:wrap}
+.cost-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.cost-fields label{font-size:.84rem}
+.cost-fields input{margin-top:5px}
+.total{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-block:1px solid #746953;padding:14px 0;margin:20px 0}
+.total output{font-size:1.4rem;color:#fff;overflow-wrap:anywhere;min-width:0}
+.checklist{padding-left:1.35rem}
+.checklist li{padding-left:6px;margin-bottom:16px}
+.reader [id]{scroll-margin-top:80px}
+@media(max-width:760px){.editorial{grid-template-columns:1fr;gap:22px}.pair{grid-template-columns:1fr;gap:12px}.reader{padding-inline:22px}.drawer-nav a{padding-block:8px}}
+@media(max-width:430px){.cost-fields{grid-template-columns:1fr}}

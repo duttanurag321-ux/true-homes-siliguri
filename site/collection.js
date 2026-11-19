@@ -80,3 +80,28 @@ for (const carousel of document.querySelectorAll("[data-carousel]")) {
   window.addEventListener("resize", sync);
   sync();
 }
+
+const brief = document.querySelector("#brief");
+if (brief) {
+  brief.addEventListener("submit", event => {
+    event.preventDefault();
+    const project = brief.querySelector("#project").value;
+    const purpose = brief.querySelector("#purpose").value;
+    const notes = brief.querySelector("#notes").value.trim();
+    const message = ["Hello True Homes,", "Project: " + project, "Request: " + purpose, notes].filter(Boolean).join("\n");
+    const destination = new URL(brief.action);
+    destination.searchParams.set("text", message);
+    window.location.assign(destination.href);
+  });
+}
+const worksheet = document.querySelector("#worksheet");
+if (worksheet) {
+  const currency = new Intl.NumberFormat("en-IN", {style:"currency", currency:"INR", maximumFractionDigits:2});
+  worksheet.addEventListener("submit", event => event.preventDefault());
+  worksheet.addEventListener("input", () => {
+    const fields = [...worksheet.querySelectorAll("input")];
+    const complete = fields.every(field => field.validity.valid);
+    const sum = fields.reduce((total, field) => total + (field.valueAsNumber || 0), 0);
+    document.querySelector("#subtotal").textContent = complete ? currency.format(sum) : "Check the entered amounts";
+  });
+}
