@@ -1,34 +1,59 @@
 <!doctype html>
 <html lang="en-IN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#161715">
-  <meta name="description" content="Explore Riverdale Villas in Tarbandha near Bagdogra Airport and Garden Villas, a farmhouse project in Rangapani, Siliguri. Enquire with True Homes on WhatsApp.">
-  <title>True Homes | Villas in Siliguri</title>
-  <link rel="stylesheet" href="styles.css">
-  <script defer src="video.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090909">
+<meta name="description" content="Explore Riverdale Villas near Bagdogra Airport and Garden Villas in Rangapani, Siliguri. Contact True Homes on WhatsApp.">
+<title>True Homes | Siliguri</title>
+<link rel="stylesheet" href="styles.css">
+<script defer src="video.js"></script>
+<script defer src="collection.js"></script>
 </head>
 <body>
 <a class="skip" href="#projects">Skip to projects</a>
-<header>
-  <a href="#home" aria-label="True Homes home"><img src="assets/wordmark.png" alt="True Homes" class="logo"></a>
-  <nav aria-label="Main navigation"><a href="#projects">Projects</a><a class="outline" href="https://wa.me/918116720125?text=Hello%20True%20Homes%2C%20I%27d%20like%20to%20enquire%20about%20your%20projects%20in%20Siliguri.">WhatsApp ↗</a></nav>
+<header class="mast">
+<a href="#home" aria-label="True Homes home"><img class="logo" src="assets/wordmark.png" alt="True Homes"></a>
+<nav class="wide-nav" aria-label="Main navigation"><a href="#projects">Projects</a><a href="#gallery">Gallery</a><a href="#interest">Enquire</a></nav>
+<button id="menu-button" class="menu-toggle" aria-expanded="false" aria-controls="menu" aria-label="Open menu"><i></i><i></i></button>
 </header>
+<nav id="menu" aria-label="Mobile navigation" hidden><a href="#home">Home</a><a href="#projects">Projects</a><a href="#gallery">Gallery</a><a href="#interest">Enquire</a></nav>
 <main>
-  <section class="hero" id="home" aria-label="True Homes in Siliguri">
-    <picture><source media="(max-width: 700px) and (orientation: portrait)" srcset="assets/cover-tall.jpg"><img class="film" src="assets/cover-wide.jpg" alt=""></picture>
-    <video class="film" muted loop playsinline aria-hidden="true" data-wide="assets/hero-desktop.mp4.mp4" data-tall="assets/hero-mobile.mp4.mp4"></video>
-    <div class="hero-foot"><div><p class="label">West Bengal, India</p><h1>Villas in Siliguri</h1></div>
-    <div class="controls"><button type="button" hidden>Play film</button><a href="#projects">Explore projects ↓</a></div></div>
-  </section>
-  <section class="projects" id="projects" aria-labelledby="projects-heading">
-    <p class="label">True Homes / Siliguri</p><h2 id="projects-heading">The projects</h2>
-    <article><div><p class="label">Villa project</p><h3>Riverdale Villas</h3><p>Tarbandha, Siliguri <span>·</span> Near Bagdogra Airport</p></div>
-    <a class="project-link" aria-label="Enquire about Riverdale Villas on WhatsApp" href="https://wa.me/918116720125?text=Hello%20True%20Homes%2C%20I%27m%20interested%20in%20Riverdale%20Villas%20in%20Tarbandha.%20Could%20you%20share%20the%20details%3F">Enquire on WhatsApp ↗</a></article>
-    <article><div><p class="label">Farmhouse project</p><h3>Garden Villas</h3><p>Rangapani, Siliguri</p></div>
-    <a class="project-link" aria-label="Enquire about Garden Villas on WhatsApp" href="https://wa.me/918116720125?text=Hello%20True%20Homes%2C%20I%27m%20interested%20in%20Garden%20Villas%2C%20the%20farmhouse%20project%20in%20Rangapani.%20Could%20you%20share%20the%20details%3F">Enquire on WhatsApp ↗</a></article>
-  </section>
+<section class="hero" id="home" aria-label="True Homes opening film">
+<h1 class="sr">True Homes villas in Siliguri</h1>
+<picture><source media="(max-width: 700px) and (orientation: portrait)" srcset="assets/cover-tall.jpg"><img class="film" src="assets/cover-wide.jpg" alt=""></picture>
+<video class="film" muted loop playsinline aria-hidden="true" data-wide="assets/hero-desktop.mp4.mp4" data-tall="assets/hero-mobile.mp4.mp4"></video>
+<div class="film-foot"><a href="#projects">Discover the projects ↓</a><span class="controls"><button type="button" hidden>Play film</button></span></div>
+</section>
+
+<section id="projects" class="showcase" aria-label="Projects in Siliguri" data-carousel>
+<div class="track" tabindex="0" aria-label="Swipe or use arrow keys to browse projects">
+<article class="slide river"><div class="slide-title"><p>Siliguri · Villa project</p><h2>Riverdale <em>Villas</em></h2></div>
+<div class="slide-foot"><p>Tarbandha, near Bagdogra Airport</p><a class="glass" href="https://wa.me/918116720125?text=Hello%20True%20Homes%2C%20please%20share%20details%20about%20Riverdale%20Villas%20in%20Tarbandha.">Enquire about Riverdale ↗</a></div></article>
+<article class="slide garden"><div class="slide-title"><p>Siliguri · Farmhouse project</p><h2>Garden <em>Villas</em></h2></div>
+<div class="slide-foot"><p>Rangapani, Siliguri</p><a class="glass" href="https://wa.me/918116720125?text=Hello%20True%20Homes%2C%20please%20share%20details%20about%20Garden%20Villas%20in%20Rangapani.">Enquire about Garden Villas ↗</a></div></article>
+</div>
+<button class="arrow prev" aria-label="Previous project"></button><button class="arrow next" aria-label="Next project"></button>
+<div class="dots" aria-label="Choose project"><button aria-label="Show Riverdale Villas" aria-pressed="true"></button><button aria-label="Show Garden Villas" aria-pressed="false"></button></div>
+</section>
+
+<section id="gallery" class="gallery"><h2>Architecture <em>in focus</em></h2>
+<div class="gallery-stage" data-carousel>
+<div class="track" tabindex="0" aria-label="Browse stills from the True Homes film">
+<figure><img src="assets/terrace.jpg" loading="lazy" alt="Terrace with glass balustrade beneath a deep roof overhang"><figcaption>Terrace lines <small>True Homes film</small></figcaption></figure>
+<figure><img src="assets/glass.jpg" loading="lazy" alt="Warm interior light seen through full-height glazing"><figcaption>Through the glass <small>True Homes film</small></figcaption></figure>
+<figure><img src="assets/roof.jpg" loading="lazy" alt="Angular roof edge catching the evening light"><figcaption>Light on the façade <small>True Homes film</small></figcaption></figure>
+</div>
+<button class="arrow prev" aria-label="Previous film still"></button><button class="arrow next" aria-label="Next film still"></button>
+<div class="dots" aria-label="Choose film still"><button aria-label="Show terrace" aria-pressed="true"></button><button aria-label="Show glazing" aria-pressed="false"></button><button aria-label="Show façade" aria-pressed="false"></button></div>
+</div></section>
+
+<section id="interest" class="interest"><div class="contact-panel"><h2><em>Express</em> your interest</h2>
+<form action="https://wa.me/918116720125" method="get">
+<label for="project">Project of interest</label><select id="project" name="text"><option value="Hello True Homes, please share details about both projects in Siliguri.">Both projects</option><option value="Hello True Homes, please share details about Riverdale Villas in Tarbandha.">Riverdale Villas</option><option value="Hello True Homes, please share details about Garden Villas in Rangapani.">Garden Villas</option></select>
+<button class="glass" type="submit">Continue on WhatsApp ↗</button></form>
+<a class="number" href="https://wa.me/918116720125">+91 81167 20125</a></div></section>
 </main>
-<footer><img src="assets/wordmark.png" alt="True Homes" class="logo"><a href="https://wa.me/918116720125">WhatsApp &nbsp; +91 81167 20125 ↗</a></footer>
+<footer><img class="logo" src="assets/wordmark.png" alt="True Homes"><span>Siliguri, West Bengal</span></footer>
+<nav class="dock" aria-label="Quick actions"><a href="#projects">Projects</a><a href="#gallery">Gallery</a><a href="https://wa.me/918116720125?text=Hello%20True%20Homes%2C%20I%27d%20like%20to%20enquire%20about%20your%20Siliguri%20projects.">WhatsApp ↗</a></nav>
 </body></html>
