@@ -128,13 +128,13 @@
   "appearance": {
     "blur": 20,
     "tint": 46,
-    "radius": 18,
+    "radius": 15,
     "accent": "#d5dfef",
     "heading": "modern",
     "motion": "standard",
-    "speed": "normal",
+    "speed": "slow",
     "slides": "auto",
-    "interval": 6,
+    "interval": 3,
     "header": "scroll"
   },
   "favicon": "uploads/5e3277cb-84ca-45ab-b5ee-e2d37cafb81f-TrueHomes-Favicon.ico"
