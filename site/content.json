@@ -134,7 +134,7 @@
     "motion": "standard",
     "speed": "slow",
     "slides": "auto",
-    "interval": 3,
+    "interval": 5,
     "header": "scroll"
   },
   "favicon": "uploads/5e3277cb-84ca-45ab-b5ee-e2d37cafb81f-TrueHomes-Favicon.ico"
