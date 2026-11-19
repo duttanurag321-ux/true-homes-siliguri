@@ -8,17 +8,21 @@ function updateButton() {
   toggle.textContent = film.paused ? "Play film" : "Pause film";
 }
 
-function chooseFilm() {
-  film.classList.remove("ready");
-  toggle.hidden = true;
-  film.src = portrait.matches ? film.dataset.tall : film.dataset.wide;
-  if (!reducedMotion.matches && !pausedByVisitor) film.play().catch(updateButton);
+function playFilm() {
+  film.play().catch(updateButton);
 }
 
-film.addEventListener("loadeddata", () => {
+function chooseFilm() {
+  film.classList.remove("ready");
+  film.muted = true;
+  film.playsInline = true;
+  film.preload = "metadata";
+  film.src = portrait.matches ? film.dataset.tall : film.dataset.wide;
   toggle.hidden = false;
   updateButton();
-});
+  if (!reducedMotion.matches && !pausedByVisitor) playFilm();
+}
+
 film.addEventListener("playing", () => {
   film.classList.add("ready");
   updateButton();
@@ -26,12 +30,17 @@ film.addEventListener("playing", () => {
 film.addEventListener("pause", updateButton);
 film.addEventListener("error", () => {
   film.classList.remove("ready");
-  toggle.hidden = true;
+  toggle.textContent = "Retry film";
 });
 toggle.addEventListener("click", () => {
-  pausedByVisitor = !film.paused;
-  if (pausedByVisitor) film.pause();
-  else film.play().catch(updateButton);
+  if (film.paused || film.error) {
+    pausedByVisitor = false;
+    if (film.error) film.load();
+    playFilm();
+  } else {
+    pausedByVisitor = true;
+    film.pause();
+  }
 });
 portrait.addEventListener("change", chooseFilm);
 reducedMotion.addEventListener("change", chooseFilm);
