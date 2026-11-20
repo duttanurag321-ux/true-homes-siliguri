@@ -119,3 +119,22 @@ if(!still()&&'IntersectionObserver' in window){
   reduced.addEventListener('change',()=>{if(still())document.querySelectorAll('.waiting').forEach(el=>el.classList.remove('waiting'));});
 }
 
+// A sandboxed section can resize itself or open one of its selected project pages.
+window.addEventListener('message',event=>{
+ const message=event.data;
+ if(!message || typeof message!=='object' || !('thHeight' in message || 'thProject' in message))return;
+ const frame=Array.from(document.querySelectorAll('iframe.section-frame')).find(f=>f.contentWindow===event.source);
+ if(!frame)return;
+ if(frame.dataset.fit==='auto' && Number.isFinite(message.thHeight)){
+   frame.style.height=Math.min(200000,Math.max(1,Math.ceil(message.thHeight)))+'px';
+ }
+ if(typeof message.thProject==='string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(message.thProject) && frame.dataset.projects.split(' ').includes(message.thProject)){
+   if(document.body.hasAttribute('data-preview'))parent.postMessage({previewPage:message.thProject},'*');
+   else location.assign(message.thProject+'.html');
+ }
+});
+
+for(const frame of document.querySelectorAll('iframe[data-fit="auto"]')){
+ const measure=()=>frame.contentWindow?.postMessage('th-measure','*');
+ frame.addEventListener('load',measure);measure();
+}

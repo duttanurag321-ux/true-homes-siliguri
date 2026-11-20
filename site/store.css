@@ -72,3 +72,9 @@ html[data-hero-align=right] .hero-copy{margin-left:auto}
 .hero:after{opacity:var(--hero-shade,1)}
 iframe.section-frame{display:block;width:100%;border:0;height:var(--frame-height)}
 @media(max-width:700px){iframe.section-frame{height:var(--phone-frame-height)}}
+
+.editable-section{min-width:0;padding:var(--space-top,clamp(40px,6vw,88px)) var(--space-side,var(--pad)) var(--space-bottom,clamp(40px,6vw,88px))}
+.editable-section>h2{font-size:clamp(2rem,4.5vw,5rem);margin-bottom:.4em}
+.editable-section>p{margin-bottom:1.25em}.editable-section>.button{margin-top:1rem}
+.collection-cover{width:100%;max-height:65vh;object-fit:cover;display:block;margin-bottom:1.5rem}
+@media(max-width:700px){.editable-section{padding:var(--space-phoneTop,var(--space-top,36px)) var(--space-phoneSide,var(--space-side,var(--pad))) var(--space-phoneBottom,var(--space-bottom,36px))}}

@@ -1,10 +1,11 @@
+import {sectionSlots} from './sections.mjs';
 import {render,validate,visualDefaults} from './render.mjs';
 import {repository,request} from './github.mjs';
 const $=s=>document.querySelector(s);
 const tabs=['Overview','Brand & menu','Homepage','Projects','Appearance'];
 let data, original, repo, head, db, busy=false, tab='Overview', selected='', dragging=null;
 let pending=new Map(), urls=new Map(), draftWrites=Promise.resolve();
-const note=text=>$('#status').textContent=text;
+const note=text=>{ $('#status').textContent=text;if(!repo)$('#login-error').textContent=text; };
 function el(tag,text='',cls=''){const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;}
 function button(text,fn,cls){const b=el('button',text,cls);b.type='button';b.onclick=fn;return b;}
 function box(parent,title){const b=el('div','','box');if(title)b.append(el('h2',title));parent.append(b);return b;}
@@ -21,7 +22,7 @@ function field(parent,label,obj,key,opts={}){
  if(opts.choices)for(const [value,name] of opts.choices)input.add(new Option(name,value));
  if(opts.num){input.type='number';input.min=opts.num[0];input.max=opts.num[1];}
  if(opts.code)input.className='code';
- input.value=obj[key]??'';if(opts.placeholder)input.placeholder=opts.placeholder;
+ input.value=obj[key]??opts.defaultValue??'';if(opts.placeholder)input.placeholder=opts.placeholder;
  input.oninput=()=>{obj[key]=opts.num && input.value!==''?Number(input.value):input.value;};
  input.onchange=()=>{save();if(opts.refresh)draw();};
  wrap.append(input);parent.append(wrap);return input;
@@ -102,22 +103,52 @@ function brand(panel){
  const nav=box(panel,'Menu links');data.menu.forEach((m,i)=>{const div=el('div','','subcard');nav.append(div);field(div,'Label',m,'label');destination(div,m,'url');controls(div,data.menu,i,'this menu link');});
  nav.append(button('Add menu link',()=>{data.menu.push({label:'New link',url:'index.html'});save();draw();}));
 }
-const captions={hero:'Hero banner',projects:'Project showcase',gallery:'Project photo gallery',spotlight:'Featured project carousel',help:'WhatsApp quick links',contact:'Site visit form',text:'Text and image',custom:'Custom code section'};
-const starter = `<style>
-  .visit { padding: clamp(24px, 7vw, 80px); background: #10251e; color: #fff; }
-  .visit h2 { margin: 0 0 12px; font: 500 clamp(28px, 6vw, 56px)/1.1 Georgia, serif; }
-  .visit p { max-width: 48ch; line-height: 1.6; }
-</style>
-<section class="visit"><h2>Plan your site visit</h2><p>Tell us which Siliguri project you would like to explore.</p></section>`;
+const captions={hero:'Hero banner',projects:'Project showcase',gallery:'Project photo gallery',spotlight:'Featured project carousel',help:'WhatsApp quick links',contact:'Site visit form',text:'Text and image',collection:'Project collection',custom:'Custom code section'};
+function projectPicker(parent,section){
+ const list=section.cards||[];
+ const group=box(parent,'Projects in this section');
+ group.append(el('p','Choose the project each card opens. Its current name, location and cover are filled in automatically.'));
+ for(const [i,item] of list.entries()){
+  const card=el('div','','subcard');group.append(card);
+  field(card,'Project page',item,'slug',{choices:data.projects.map(p=>[p.slug,p.name]),refresh:true});
+  const p=data.projects.find(p=>p.slug===item.slug);
+  if(!item.image && p){const path=p.cover||p.photos?.[0];if(path){const img=el('img','','thumb');img.alt=p.name;img.src=urls.get(path)||new URL('../'+path,location.href);card.append(img);}else card.append(el('p','This project has no photo yet. Choose a card image below.','hint'));}
+  mediaField(card,'Card image override',item,'image');controls(card,list,i,'this project card');
+ }
+ const add=button('Add project card',()=>{const project=data.projects.find(p=>!list.some(item=>item.slug===p.slug))||data.projects[0];if(!project)return;section.cards=list;list.push({slug:project.slug,image:''});save();draw();});
+ add.disabled=!data.projects.length;group.append(add);
+}
+function sectionLayout(parent,section){
+ const details=el('details','','code-guide');details.append(el('summary','Spacing and section cover'));parent.append(details);
+ details.append(el('p','Leave a field blank for site spacing. Enter 0 for an edge-to-edge layout. Phone settings override desktop settings.'));
+ for(const [key,label] of Object.entries({top:'Desktop top',bottom:'Desktop bottom',side:'Desktop sides',phoneTop:'Phone top',phoneBottom:'Phone bottom',phoneSide:'Phone sides'}))field(details,label+' padding (px)',section,key,{num:[0,240],placeholder:'Site default'});
+ mediaField(details,'Section cover image',section,'sectionCover');
+}
+const starter = `<section><h2>{{text:Heading}}</h2><p>{{text:Description}}</p>{{project_cards}}</section>`;
 function codeFields(b,obj){
  const guide=el('details','','code-guide');guide.append(el('summary','How to create a section with ChatGPT'));b.append(guide);
- const promptText='Create a responsive section for the True Homes real estate website. Return one paste-ready HTML fragment containing a <style> block, semantic HTML, and optional inline vanilla JavaScript in <script>. Use mobile-first CSS, accessible labels and keyboard controls. It runs in a sandboxed iframe. Use absolute HTTPS image URLs. Keep interactivity inside the section. Do not use Liquid, React, imports, fetch, forms, external scripts or Markdown fences. Use the editor’s separate button for outbound links. My section should show: [describe the content, colours and layout].';
- guide.append(el('p','Paste HTML, CSS and optional JavaScript together in one field. The section has its own styles. Use the preview to check each screen size.'),el('p',promptText,'prompt'));
- guide.append(button('Copy ChatGPT prompt',async()=>{try{await navigator.clipboard.writeText(promptText);note('Prompt copied. Replace the text in brackets with your section idea.');}catch{note('Select the prompt above and copy it.');}}));
- const code=field(b,'Section code',obj,'code',{long:true,code:true,placeholder:'Paste your <style>, HTML and optional <script> together'});
- b.append(button('Use starter section',()=>{if(code.value.trim()&&!confirm('Replace this section’s code with the starter?'))return;code.value=obj.code=starter;save();code.focus();}));
- field(b,'Desktop frame height (100–4000 px)',obj,'codeHeight',{num:[100,4000]});
- field(b,'Phone frame height (blank uses desktop)',obj,'phoneCodeHeight',{num:[100,4000]});
+ const promptText='Create one mobile-first HTML fragment with inline CSS for the True Homes section editor. It runs in an auto-height sandbox. Use normal document flow, no viewport heights, fixed heights, nested scroll panels or outer padding. The editor controls spacing. Inherit fonts and use --page-bg, --page-ink, --glass-accent and --title-font. Use {{text:Heading}} and other named text placeholders wherever I should edit copy. Use <img src="{{image:Cover}}" alt=""> for editable images. For selected projects insert {{project_cards}} in the markup. The editor supplies cards, photos, titles and project links. Style .th-project-grid and .th-project-card as needed. Use simple descriptive field names. Optional inline vanilla JS only. Return raw HTML without Markdown fences. My section should show: [describe the section].';
+ guide.append(el('p',promptText,'prompt'),button('Copy ChatGPT prompt',async()=>{try{await navigator.clipboard.writeText(promptText);note('Prompt copied.');}catch{note('Select and copy the prompt.');}}));
+ const code=field(b,'Section code',obj,'code',{long:true,code:true,placeholder:'Paste your HTML and CSS'});
+ const slots=el('div');const refreshFields=()=>{
+  slots.replaceChildren();
+  for(const {kind,label} of sectionSlots(obj.code)){
+   obj.values ||= {};const key=kind+':'+label;
+   if(kind==='image')mediaField(slots,label,obj.values,key);
+   else field(slots,label,obj.values,key,{placeholder:label});
+  }
+  if(obj.code?.includes('{{project_cards}}'))projectPicker(slots,obj);
+ };
+ code.addEventListener('change',refreshFields);
+ b.append(button('Use starter section',()=>{if(code.value.trim()&&!confirm('Replace this section’s code with the starter?'))return;code.value=obj.code=starter;refreshFields();save();code.focus();}),slots);
+ refreshFields();
+ field(b,'Section styling',obj,'frameTheme',{choices:[['site','Match website'],['original','Keep code styling']],defaultValue:'site'});
+ field(b,'Height',obj,'frameMode',{choices:[['auto','Auto-fit content'],['fixed','Fixed height']],defaultValue:'auto',refresh:true});
+ if(obj.frameMode==='fixed'){
+  field(b,'Desktop frame height (100–4000 px)',obj,'codeHeight',{num:[100,4000]});
+  field(b,'Phone frame height (blank uses desktop)',obj,'phoneCodeHeight',{num:[100,4000]});
+ }
+ b.append(button('Auto-fit section',()=>{obj.frameMode='auto';save();draw();note('Auto-fit enabled for desktop and phone. Open Preview to see the result.');}));
 }
 function homepage(panel){
  panel.append(el('h1','Homepage editor'),el('p','Open a section to edit it. Drag its handle to change the order, or use the arrows.'));
@@ -139,6 +170,8 @@ function homepage(panel){
     card.append(button('Add WhatsApp action',()=>{s.actions.push({label:'Ask True Homes',message:'I have a property enquiry.'});save();draw();}));
   }
   if(s.type==='text')mediaField(card,'Section image',s,'image');
+  if(['custom','collection'].includes(s.type))sectionLayout(card,s);
+  if(s.type==='collection')projectPicker(card,s);
   if(s.type==='custom')codeFields(card,s);
   if(['hero','text','custom'].includes(s.type)){field(card,'Button text',s,'button');destination(card,s,'url');}
  });
@@ -146,7 +179,7 @@ function homepage(panel){
  const position=el('select');position.setAttribute('aria-label','Insert section at');
  data.sections.forEach((s,i)=>position.add(new Option('Before '+(s.title||captions[s.type]),i)));
  position.add(new Option('At the bottom',data.sections.length));position.value=data.sections.length;
- b.append(sel,position,button('Add section',()=>{const type=sel.value,id=type+'-'+crypto.randomUUID().slice(0,8);data.sections.splice(Number(position.value),0,{type,id,title:captions[type],text:'',url:'',button:'',mode:'image',height:85,mobileHeight:75,fit:'cover',codeHeight:500});selected=id;save();draw();}));
+ b.append(sel,position,button('Add section',()=>{const type=sel.value,id=type+'-'+crypto.randomUUID().slice(0,8);data.sections.splice(Number(position.value),0,{type,id,title:type==='custom'?'':type==='collection'?'Trending projects in Siliguri':captions[type],text:'',url:'',button:'',mode:'image',height:85,mobileHeight:75,fit:'cover',codeHeight:500});selected=id;save();draw();}));
 }
 function projects(panel){
  panel.append(el('h1','Projects'));
@@ -165,17 +198,16 @@ function projects(panel){
  for(const [k,l]of Object.entries({name:'Project name',type:'Property type',location:'Location',price:'Price (for example, From ₹65 lakh)',size:'Size (for example, 1,800 sq ft)',status:'Project status',about:'About the project',maps:'Google Maps share link'}))field(b,l,p,k,{long:k==='about'});
  const m=box(panel,'Photos and plans');mediaField(m,'Project cover photo',p,'cover');mediaField(m,'Project photos',p,'photos','image',true);mediaField(m,'Floor plans · image or PDF',p,'floor','plan',true);mediaField(m,'Site plans · image or PDF',p,'site','plan',true);
  const c=box(panel,'Custom project page');field(c,'Page layout',p,'layout',{choices:[['standard','Project details, then optional custom content'],['custom','My custom page with enquiry buttons']]});codeFields(c,p);
- const z=box(panel,'Remove project');z.append(button('Remove this project',()=>{if(!confirm('Remove '+p.name+'? Its page will be removed on publish.'))return;data.projects.splice(data.projects.indexOf(p),1);selected='';save();draw();},'danger'));
+ const z=box(panel,'Remove project');z.append(button('Remove this project',()=>{if(!confirm('Remove '+p.name+'? Its page will be removed on publish.'))return;data.projects.splice(data.projects.indexOf(p),1);for(const item of [...data.sections,...data.projects])if(item.cards)item.cards=item.cards.filter(card=>card.slug!==p.slug);selected='';save();draw();},'danger'));
 }
 function go(name){tab=name;selected='';draw();window.scrollTo(0,0);}
 function draw(){
  $('#connection').textContent=repo?'Signed in · True Homes':'Owner dashboard';
  const nav=$('#tabs');nav.replaceChildren();for(const t of tabs){const b=button(t,()=>go(t));b.setAttribute('aria-current',String(t===tab));nav.append(b);}
  const panel=$('#panel');panel.replaceChildren();
- if(!repo){nav.replaceChildren();panel.append(el('h1','Website dashboard'));
-   const b=box(panel,'Owner sign-in');b.append(el('p','Sign in with your user ID and password to edit and publish.'),button('Sign in',()=>$('#login').showModal(),'primary'));
-   return;
- }
+ document.body.classList.toggle('signed-out',!repo);
+ $('#login').hidden=Boolean(repo);
+ if(!repo){nav.replaceChildren();return;}
  [overview,brand,homepage,projects,appearance][tabs.indexOf(tab)](panel);
 }
 let previewHTML='';
@@ -186,7 +218,7 @@ function updateFrame(){
    .replace('<head>','<head><base href="'+root+'">').replace('<body>','<body data-preview>');
  $('#frame').src='../preview.html?view='+crypto.randomUUID();
 }
-$('#preview').onclick=()=>{if(!repo){$('#login').showModal();return;}const sel=$('#preview-page');sel.replaceChildren(new Option('Homepage','index'));for(const p of data.projects)sel.add(new Option(p.name,p.slug));sel.value=tab==='Projects'?(data.projects.find(p=>p.slug===selected)||data.projects[0])?.slug||'index':'index';updateFrame();$('#viewer').showModal();};
+$('#preview').onclick=()=>{if(!repo){$('#user').focus();return;}const sel=$('#preview-page');sel.replaceChildren(new Option('Homepage','index'));for(const p of data.projects)sel.add(new Option(p.name,p.slug));sel.value=tab==='Projects'?(data.projects.find(p=>p.slug===selected)||data.projects[0])?.slug||'index':'index';updateFrame();$('#viewer').showModal();};
 window.addEventListener('message',event=>{
  const frame=$('#frame');
  if(event.source!==frame.contentWindow||!$('#viewer').open)return;
@@ -205,19 +237,19 @@ async function resume(){
  if(JSON.stringify(data)===JSON.stringify(original)){data=live.data;original=structuredClone(data);}
  head=live.sha;save();draw();note('Signed in. Draft changes stay on this device until you publish.');
 }
-$('#login').addEventListener('close',()=>{$('#password').value='';$('#login-error').textContent='';});
+
 $('#credentials').onsubmit=async event=>{
  event.preventDefault();$('#connect').disabled=true;
- try{await request('login',{user:$('#user').value,password:$('#password').value});await resume();$('#login').close();}
+ try{await request('login',{user:$('#user').value,password:$('#password').value});await resume();$('#password').value='';$('#login-error').textContent='';}
  catch(e){$('#login-error').textContent=e.message;}finally{$('#connect').disabled=false;}
 };
 $('#publish').onclick=async()=>{
- if(busy)return;if(!repo){$('#login').showModal();return;}
+ if(busy)return;if(!repo){$('#user').focus();return;}
  try{validate(data);if(!confirm('Publish these changes to the True Homes production branch?'))return;busy=true;document.querySelector('.shell').inert=true;
   if(!head)throw Error('Download your draft and reload the latest version in Draft tools.');
   head=await repo.publish(head,data,pending,note);original=structuredClone(data);pending.clear();save();
   note('Saved to GitHub. Cloudflare will update the live site after its connected build succeeds.');draw();
- }catch(e){if(e.status===401){repo=null;draw();$('#login').showModal();}note(e.message);}finally{busy=false;document.querySelector('.shell').inert=false;}
+ }catch(e){if(e.status===401){repo=null;draw();$('#user').focus();}note(e.message);}finally{busy=false;document.querySelector('.shell').inert=false;}
 };
 async function publicData(){const res=await fetch('../content.json',{cache:'no-store'});if(!res.ok)throw Error('Cannot read site/content.json. Check the upload folder.');return res.json();}
 async function start(){
