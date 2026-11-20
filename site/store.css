@@ -63,3 +63,12 @@ html[data-motion=subtle] .detail-hero .backdrop,html[data-motion=subtle] .connec
  .mast,.scene-copy,.inset-photo,.reveal{transition-duration:var(--motion-time,450ms)}
 }
 @media(prefers-reduced-motion:reduce){.mast,.sheet,.scene-copy,.reveal{transition:none}.reveal.waiting{opacity:1;transform:none}}
+
+:root{background:var(--page-bg,#050505);color:var(--page-ink,#fafafa);font-size:var(--body-size,16px)}
+h1,h2,h3{text-transform:var(--heading-case,uppercase);font-weight:var(--heading-weight,380)}
+.hero-copy{text-align:var(--hero-align,left)}
+html[data-hero-align=center] .hero-copy{margin-inline:auto}
+html[data-hero-align=right] .hero-copy{margin-left:auto}
+.hero:after{opacity:var(--hero-shade,1)}
+iframe.section-frame{display:block;width:100%;border:0;height:var(--frame-height)}
+@media(max-width:700px){iframe.section-frame{height:var(--phone-frame-height)}}

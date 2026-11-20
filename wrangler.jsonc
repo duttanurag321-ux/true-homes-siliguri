@@ -1,5 +1,10 @@
 {
   "name": "true-homes-siliguri",
   "compatibility_date": "2026-11-19",
-  "assets": { "directory": "./site" }
+  "main": "worker.mjs",
+  "assets": {"directory": "./site", "binding": "ASSETS", "run_worker_first": ["/api/editor/*"]},
+  "ratelimits": [{"name":"LOGIN_LIMIT","namespace_id":"720125","simple":{"limit":8,"period":60}}],
+  "previews": {
+    "ratelimits": [{"name":"LOGIN_LIMIT","namespace_id":"720126","simple":{"limit":8,"period":60}}]
+  }
 }
