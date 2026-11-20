@@ -15,6 +15,9 @@ export function validate(d) {
     if (p.maps && !/^https:\/\/(?:maps\.app\.goo\.gl|(?:www\.)?google\.(?:com|co\.in)|maps\.google\.(?:com|co\.in)|goo\.gl)\//i.test(p.maps)) throw Error('Paste a full Google Maps share link for '+p.name);
   }
   if (!d.sections.length) throw Error('Add at least one homepage section.');
+  for (const section of d.sections) {
+    if(section.type==='custom' && !section.code?.trim()) throw Error('Add code to '+(section.title||'your custom section')+' before publishing.');
+  }
   for (const item of [...d.menu,...d.sections]) {
     if (item.url && !link(item.url)) throw Error('Check the link for '+(item.label || item.title));
     if (item.url && !item.url.startsWith('https://')) {
@@ -27,11 +30,12 @@ export function validate(d) {
 }
 const wa=(d,msg)=>'https://wa.me/'+d.phone+'?text='+encodeURIComponent(msg);
 const button=(label,url,cls='button')=>url&&label?'<a class="'+cls+'" href="'+url+'">'+esc(label)+'</a>':'';
-function custom(code,height) {
+function custom(code,height,phoneHeight) {
   if (!code?.trim()) return '';
   const rules="default-src 'none'; style-src 'unsafe-inline' https:; img-src https: data:; media-src https:; font-src https: data:; script-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none';";
   const inner='<meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="'+rules+'"><style>*{box-sizing:border-box}body{margin:0;color:#f8f6f1;background:#101211;font:16px Arial,sans-serif}img,video{max-width:100%}</style>'+code;
-  return '<iframe title="Custom content" loading="lazy" sandbox="allow-scripts" style="height:'+Math.min(4000,Math.max(100,Number(height)||500))+'px" srcdoc="'+esc(inner)+'"></iframe>';
+  const bounded=value=>Math.min(4000,Math.max(100,Number(value)||500));
+  return '<iframe class="section-frame" title="Custom content" loading="lazy" sandbox="allow-scripts" style="--frame-height:'+bounded(height)+'px;--phone-frame-height:'+bounded(phoneHeight||height)+'px" srcdoc="'+esc(inner)+'"></iframe>';
 }
 const media=(path,resolve)=>path && link(path)?esc(resolve(path)):'';
 const isPDF=s=>/\.pdf(?:$|[?#])/i.test(s);
@@ -48,14 +52,14 @@ function legacySection(s,d,r) {
   if (s.type==='projects') return start+title+copy+'<div class="cards">'+d.projects.map(p=>'<article class="card">'+(p.cover?'<a href="'+esc(p.slug)+'.html"><img loading="lazy" alt="'+esc(p.name)+'" src="'+media(p.cover,r)+'"></a>':'')+'<small>'+esc(p.type)+'</small><h3><a href="'+esc(p.slug)+'.html">'+esc(p.name)+'</a></h3><p>'+esc(p.location)+'</p>'+(p.price?'<strong>'+esc(p.price)+'</strong>':'')+'<div class="actions">'+button('View project',esc(p.slug)+'.html')+button(p.price?'Ask about availability':'Ask price',wa(d,'Hello '+d.brand+', please share the current price and availability for '+p.name+'.'),'plain')+'</div></article>').join('')+'</div></section>';
   if (s.type==='help') return start+'<video class="texture" src="'+media('assets/texture.mp4',r)+'" poster="'+media('assets/texture.jpg',r)+'" muted playsinline loop preload="none"></video><div class="help-inner">'+title+copy+'<div class="help-links">'+(s.actions||[]).map(a=>button(a.label+' ↗',wa(d,'Hello '+d.brand+', '+a.message),'')).join('')+'</div></div></section>';
   if (s.type==='contact') return start+title+copy+'<form class="visit-form" action="https://wa.me/'+esc(d.phone)+'" method="get"><label>Which project?<select name="text">'+['Help me choose',...d.projects.map(p=>p.name)].map(n=>'<option>'+esc(n)+'</option>').join('')+'</select></label><label>Preferred day or question <small>(optional)</small><input maxlength="350" placeholder="For example, Sunday after 11 am"></label><button class="button">Request a visit on WhatsApp ↗</button></form></section>';
-  return start+(s.title?title:'')+copy+(s.image?'<img class="story-img" alt="" src="'+media(s.image,r)+'">':'')+custom(s.code,s.codeHeight)+button(s.button,link(s.url))+'</section>';
+  return start+(s.title?title:'')+copy+(s.image?'<img class="story-img" alt="" src="'+media(s.image,r)+'">':'')+custom(s.code,s.codeHeight,s.phoneCodeHeight)+button(s.button,link(s.url))+'</section>';
 }
 function legacyDetail(p,d,r) {
  const facts=[['Location',p.location],['Property type',p.type],['Price',p.price],['Size',p.size],['Project status',p.status]].filter(v=>v[1]);
  const albums=[['Project photos',p.photos],['Floor plans',p.floor],['Site plans',p.site]];
  const gallery=albums.filter(([,a])=>a.length).map(([title,items])=>'<section class="block"><h2>'+title+'</h2><div class="photos">'+items.map((item,i)=>'<a href="'+media(item,r)+'">'+(isPDF(item)?'<span class="button">Open PDF '+(i+1)+' ↗</span>':'<img loading="lazy" src="'+media(item,r)+'" alt="'+esc(p.name)+' '+title+' '+(i+1)+'">')+'</a>').join('')+'</div></section>').join('');
- if(p.layout==='custom') return '<section class="custom-project"><p><a class="back" href="index.html">← Home</a></p><h1>'+esc(p.name)+'</h1>'+custom(p.code,p.codeHeight)+'<div class="actions">'+button('Enquire on WhatsApp',wa(d,'Hello '+d.brand+', I am interested in '+p.name+'.'))+button('Open Google Maps ↗',link(p.maps),'plain')+'</div></section>'+gallery;
- return '<section class="block project"><a class="back" href="index.html">← Home</a><p class="eyebrow">'+esc(p.type)+'</p><h1>'+esc(p.name)+'</h1><p>'+esc(p.location)+'</p>'+(p.cover?'<img class="story-img" src="'+media(p.cover,r)+'" alt="'+esc(p.name)+'">':'')+'<p>'+esc(p.about)+'</p><dl>'+facts.map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl><div class="actions">'+button('Ask price on WhatsApp',wa(d,'Hello '+d.brand+', what is the current price and availability at '+p.name+'?'))+button('Book a site visit',wa(d,'Hello '+d.brand+', I would like to visit '+p.name+'. Please share available timings.'),'plain')+button('Open Google Maps ↗',link(p.maps),'plain')+'</div></section>'+gallery+(p.code?'<section class="custom-project">'+custom(p.code,p.codeHeight)+'</section>':'');
+ if(p.layout==='custom') return '<section class="custom-project"><p><a class="back" href="index.html">← Home</a></p><h1>'+esc(p.name)+'</h1>'+custom(p.code,p.codeHeight,p.phoneCodeHeight)+'<div class="actions">'+button('Enquire on WhatsApp',wa(d,'Hello '+d.brand+', I am interested in '+p.name+'.'))+button('Open Google Maps ↗',link(p.maps),'plain')+'</div></section>'+gallery;
+ return '<section class="block project"><a class="back" href="index.html">← Home</a><p class="eyebrow">'+esc(p.type)+'</p><h1>'+esc(p.name)+'</h1><p>'+esc(p.location)+'</p>'+(p.cover?'<img class="story-img" src="'+media(p.cover,r)+'" alt="'+esc(p.name)+'">':'')+'<p>'+esc(p.about)+'</p><dl>'+facts.map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl><div class="actions">'+button('Ask price on WhatsApp',wa(d,'Hello '+d.brand+', what is the current price and availability at '+p.name+'?'))+button('Book a site visit',wa(d,'Hello '+d.brand+', I would like to visit '+p.name+'. Please share available timings.'),'plain')+button('Open Google Maps ↗',link(p.maps),'plain')+'</div></section>'+gallery+(p.code?'<section class="custom-project">'+custom(p.code,p.codeHeight,p.phoneCodeHeight)+'</section>':'');
 }
 const icons={
  menu:'<path d="M3 8h18M3 16h18"/>',close:'<path d="m5 5 14 14M19 5 5 19"/>',
@@ -109,9 +113,9 @@ function detail(p,d,r){
  return '<article class="project-page"><section class="detail-hero">'+photo(p.cover||'assets/terrace.jpg',r,'','backdrop')+'<div><p>'+esc(p.type)+'</p><h1>'+esc(p.name)+'</h1>'+button('Explore project','#overview','glass-action')+'</div></section><section class="detail-chapter intro" id="overview"><p class="overline">Introducing</p><h2>'+esc(p.name)+'</h2><p>'+esc(p.about)+'</p>'+button('Ask price',price,'glass-action')+'</section>'+
  (album.length?'<section class="project-gallery">'+carousel(album.map((f,i)=>'<figure><a href="'+media(f,r)+'">'+photo(f,r,p.name+' photo '+(i+1))+'</a></figure>'),'inset','Project gallery')+'</section>':'')+
  '<section class="detail-chapter"><h2>Project details</h2><dl>'+facts.map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+button('Open Google Maps ↗',link(p.maps),'glass-action')+'</section>'+plans+
- (p.code?custom(p.code,p.codeHeight):'')+'<section class="detail-chapter interest"><h2>Register your interest</h2>'+button('Book a site visit',visit,'glass-action')+'</section></article>';
+ (p.code?custom(p.code,p.codeHeight,p.phoneCodeHeight):'')+'<section class="detail-chapter interest"><h2>Register your interest</h2>'+button('Book a site visit',visit,'glass-action')+'</section></article>';
 }
-export const visualDefaults=Object.freeze({blur:20,tint:46,radius:18,accent:'#d5dfef',heading:'modern',motion:'standard',speed:'normal',slides:'auto',interval:6,header:'scroll'});
+export const visualDefaults=Object.freeze({blur:20,tint:46,radius:18,accent:'#d5dfef',heading:'modern',motion:'standard',speed:'normal',slides:'auto',interval:6,header:'scroll',letterCase:'uppercase',weight:380,bodySize:16,heroAlign:'left',shade:100,background:'#050505',foreground:'#fafafa'});
 function visualSettings(d){
  const a={...visualDefaults,...d.appearance};
  function number(key,min,max){
@@ -119,8 +123,11 @@ function visualSettings(d){
    return Number.isFinite(value)?Math.min(max,Math.max(min,value)):visualDefaults[key];
  }
  const accent=/^#[0-9a-f]{6}$/i.test(a.accent)?a.accent:visualDefaults.accent;
+ const color=key=>/^#[0-9a-f]{6}$/i.test(a[key])?a[key]:visualDefaults[key];
+ const layout='--page-bg:'+color('background')+';--page-ink:'+color('foreground')+';--body-size:'+number('bodySize',14,22)+'px;--heading-case:'+(a.letterCase==='none'?'none':'uppercase')+';--heading-weight:'+number('weight',300,800)+';--hero-align:'+(['left','right','center'].includes(a.heroAlign)?a.heroAlign:'left')+';--hero-shade:'+number('shade',0,100)/100+';';
  const speed=({fast:0.65,normal:1,slow:1.5})[a.speed]||1;
- return 'data-motion="'+(a.motion==='still'?'still':a.motion==='subtle'?'subtle':'standard')+'" data-auto="'+(a.slides!=='manual')+'" data-interval="'+number('interval',2,20)+'" data-header="'+(a.header==='fixed'?'fixed':'scroll')+'" style="--glass-blur:'+number('blur',0,40)+'px;--glass-tint:'+number('tint',20,88)+'%;--glass-radius:'+number('radius',0,36)+'px;--glass-accent:'+accent+';--motion-time:'+Math.round(450*speed)+'ms;--title-font:'+(a.heading==='serif'?'Georgia,serif':a.heading==='wide'?'Verdana,sans-serif':'Arial,sans-serif')+'"';
+ const align=['left','right','center'].includes(a.heroAlign)?a.heroAlign:'left';
+ return 'data-hero-align="'+align+'" data-motion="'+(a.motion==='still'?'still':a.motion==='subtle'?'subtle':'standard')+'" data-auto="'+(a.slides!=='manual')+'" data-interval="'+number('interval',2,20)+'" data-header="'+(a.header==='fixed'?'fixed':'scroll')+'" style="'+layout+'--glass-blur:'+number('blur',0,40)+'px;--glass-tint:'+number('tint',20,88)+'%;--glass-radius:'+number('radius',0,36)+'px;--glass-accent:'+accent+';--motion-time:'+Math.round(450*speed)+'ms;--title-font:'+(a.heading==='serif'?'Georgia,serif':a.heading==='wide'?'Verdana,sans-serif':'Arial,sans-serif')+'"';
 }
 export function render(d,page='index',r=x=>x){
  const p=d.projects.find(p=>p.slug===page), name=esc(d.brand);
@@ -136,4 +143,3 @@ export function render(d,page='index',r=x=>x){
  pane('search','Search projects','<div class="find"><label for="query">Search projects</label><input id="query" type="search" placeholder="Project name or location"><div class="results">'+options+'</div><p id="empty" hidden>No projects found.</p></div>',logo)+
  '<main id="main">'+(p?detail(p,d,r):d.sections.map(s=>section(s,d,r)).join(''))+'</main><footer>'+logo+'<nav>'+links+'</nav><a href="'+general+'">WhatsApp +'+esc(d.phone)+'</a><p>Siliguri, West Bengal</p></footer>'+dock+'</body></html>';
 }
-
