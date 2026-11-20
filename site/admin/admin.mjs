@@ -1,15 +1,18 @@
+import {fieldHelp,actionHelp,attachHelp,enableHelp} from './help.mjs';
 import {sectionSlots} from './sections.mjs';
 import {render,validate,visualDefaults} from './render.mjs';
 import {repository,request} from './github.mjs';
 const $=s=>document.querySelector(s);
 const tabs=['Overview','Brand & menu','Homepage','Projects','Appearance'];
-let data, original, repo, head, db, busy=false, tab='Overview', selected='', dragging=null;
+let data, original, repo, head, db, busy=false, tab='Homepage', selected='', dragging=null;
+let filter='',pickMode=false,canvasHTML='',canvasTimer,canvasReady=false;
 let pending=new Map(), urls=new Map(), draftWrites=Promise.resolve();
 const note=text=>{ $('#status').textContent=text;if(!repo)$('#login-error').textContent=text; };
 function el(tag,text='',cls=''){const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;}
-function button(text,fn,cls){const b=el('button',text,cls);b.type='button';b.onclick=fn;return b;}
+function button(text,fn,cls){const b=el('button',text,cls);b.type='button';b.onclick=fn;if(text==='↑'||text==='↓')b.setAttribute('aria-label',text==='↑'?'Move earlier':'Move later');if(actionHelp(text))b.dataset.tip=actionHelp(text);return b;}
 function box(parent,title){const b=el('div','','box');if(title)b.append(el('h2',title));parent.append(b);return b;}
 function save(){
+  queueCanvas();
   const paths=JSON.stringify(data);
   for(const path of pending.keys())if(!paths.includes(JSON.stringify(path))){pending.delete(path);URL.revokeObjectURL(urls.get(path));urls.delete(path);}
   const snap=structuredClone({data,original,pending});
@@ -23,9 +26,9 @@ function field(parent,label,obj,key,opts={}){
  if(opts.num){input.type='number';input.min=opts.num[0];input.max=opts.num[1];}
  if(opts.code)input.className='code';
  input.value=obj[key]??opts.defaultValue??'';if(opts.placeholder)input.placeholder=opts.placeholder;
- input.oninput=()=>{obj[key]=opts.num && input.value!==''?Number(input.value):input.value;};
- input.onchange=()=>{save();if(opts.refresh)draw();};
- wrap.append(input);parent.append(wrap);return input;
+ input.oninput=()=>{obj[key]=opts.num && input.value!==''?Number(input.value):input.value;queueCanvas();};
+ input.onchange=()=>{save();if(opts.refresh)draw();else if(key==='title'&&parent.dataset.section){parent.querySelector('.section-name').textContent=obj.title||captions[obj.type];parent.dataset.search=((obj.title||'')+' '+captions[obj.type]).toLowerCase();}};
+ wrap.append(input);parent.append(wrap);attachHelp(wrap,input,label,fieldHelp(label,key));return input;
 }
 function move(list,from,to){if(to>=0&&to<list.length&&from!==to){list.splice(to,0,list.splice(from,1)[0]);save();draw();}}
 function controls(parent,list,index,thing){
@@ -52,11 +55,11 @@ function mediaField(parent,label,obj,key,kind='image',multi=false){
     save();draw();
    }catch(e){note(e.message);}
  };
- lab.append(inp);area.append(lab);
+ lab.append(inp);area.append(lab);const purpose=key==='favicon'?'This small icon appears in the browser tab. ':key==='logo'?'This identifies your business in the website header. ':'';attachHelp(lab,inp,label,purpose+'Choose '+label.toLowerCase()+' from your device. Accepted files: '+Object.keys(allowed).join(', ')+'. Up to 24 MiB each.');
 }
 function destination(parent,obj,key){
  const input=field(parent,'Button or menu link',obj,key);
- const select=el('select');select.setAttribute('aria-label','Choose an existing destination');
+ const select=el('select');select.dataset.tip='Pick a page or homepage section to fill in the link automatically.';select.setAttribute('aria-label','Choose an existing destination');
  select.add(new Option('Choose a page or section…',''));
  select.add(new Option('Homepage','index.html'));
  for(const s of data.sections)select.add(new Option(s.title||s.id,'index.html#'+s.id));
@@ -151,12 +154,25 @@ function codeFields(b,obj){
  b.append(button('Auto-fit section',()=>{obj.frameMode='auto';save();draw();note('Auto-fit enabled for desktop and phone. Open Preview to see the result.');}));
 }
 function homepage(panel){
- panel.append(el('h1','Homepage editor'),el('p','Open a section to edit it. Drag its handle to change the order, or use the arrows.'));
+ panel.append(el('h1','Homepage'));
+ const search=el('input','','section-search');search.type='search';search.placeholder='Find a section…';search.setAttribute('aria-label','Find a homepage section');search.value=filter;search.dataset.tip='Type a section name, such as Gallery, to narrow the list. Clear the search to see all sections.';
+ const outline=el('div','','outline');const empty=el('p','No matching sections.','hint');
+ panel.append(search,outline,empty);
+ const applyFilter=()=>{let found=0;for(const card of outline.children){card.hidden=!card.dataset.search.includes(filter.trim().toLowerCase());if(!card.hidden)found++;}empty.hidden=found>0;};
+ search.oninput=()=>{filter=search.value;applyFilter();};
  data.sections.forEach((s,i)=>{
-  const card=el('details','','card'),title=el('summary');title.append(el('span','⠿ ','grip'),document.createTextNode((i+1)+'. '+(s.title||captions[s.type])));card.append(title);card.open=selected===s.id;card.ontoggle=()=>{if(card.open)selected=s.id;};
+  const card=el('details','','card'),title=el('summary');
+  const name=s.title||captions[s.type]||s.id;
+  title.append(el('span','','section-symbol'),el('span',name,'section-name'));title.dataset.tip='Open '+name+' settings. Drag this row or use the move buttons to change its position.';
+  card.dataset.search=(name+' '+(captions[s.type]||'')).toLowerCase();card.dataset.section=s.id;card.append(title);card.open=selected===s.id;
+  card.ontoggle=()=>{
+    if(!card.isConnected)return;
+    if(card.open){selected=s.id;for(const other of outline.children)if(other!==card)other.open=false;sendView(true);}
+    else if(selected===s.id){selected='';sendView(false);}
+  };
   title.draggable=true;title.ondragstart=e=>{dragging=s.id;e.dataTransfer.setData('text/plain',s.id);};title.ondragend=()=>dragging=null;
   card.ondragover=e=>{if(dragging)e.preventDefault();};card.ondrop=e=>{e.preventDefault();if(dragging){move(data.sections,data.sections.findIndex(x=>x.id===dragging),i);dragging=null;}};
-  panel.append(card);card.append(button('Duplicate section',()=>{const copy=structuredClone(s);copy.id=s.type+'-'+crypto.randomUUID().slice(0,8);data.sections.splice(i+1,0,copy);selected=copy.id;save();draw();}));controls(card,data.sections,i,'this section');field(card,'Heading',s,'title');field(card,'Short description',s,'text',{long:true});
+  outline.append(card);card.append(button('Duplicate section',()=>{const copy=structuredClone(s);copy.id=s.type+'-'+crypto.randomUUID().slice(0,8);data.sections.splice(i+1,0,copy);selected=copy.id;save();draw();}));controls(card,data.sections,i,'this section');field(card,'Heading',s,'title');field(card,'Short description',s,'text',{long:true});
   if(s.type==='hero'){
     field(card,'Show',s,'mode',{choices:[['video','Video'],['image','Image']],refresh:true});
     if(s.mode==='video'){mediaField(card,'Desktop hero video',s,'wide','video');mediaField(card,'Mobile hero video',s,'tall','video');}
@@ -175,16 +191,17 @@ function homepage(panel){
   if(s.type==='custom')codeFields(card,s);
   if(['hero','text','custom'].includes(s.type)){field(card,'Button text',s,'button');destination(card,s,'url');}
  });
- const b=box(panel,'Add a section'),sel=el('select');for(const [k,v]of Object.entries(captions))sel.add(new Option(v,k));sel.value='text';
- const position=el('select');position.setAttribute('aria-label','Insert section at');
+ applyFilter();
+ const b=box(panel,'Add a section'),sel=el('select');sel.setAttribute('aria-label','Section type');sel.dataset.tip='Choose a layout. Project collection lets you pick properties. Custom code accepts a section from ChatGPT.';for(const [k,v]of Object.entries(captions))sel.add(new Option(v,k));sel.value='text';
+ const position=el('select');position.setAttribute('aria-label','Insert section at');position.dataset.tip='Choose where the new section will appear on your homepage.';
  data.sections.forEach((s,i)=>position.add(new Option('Before '+(s.title||captions[s.type]),i)));
  position.add(new Option('At the bottom',data.sections.length));position.value=data.sections.length;
- b.append(sel,position,button('Add section',()=>{const type=sel.value,id=type+'-'+crypto.randomUUID().slice(0,8);data.sections.splice(Number(position.value),0,{type,id,title:type==='custom'?'':type==='collection'?'Trending projects in Siliguri':captions[type],text:'',url:'',button:'',mode:'image',height:85,mobileHeight:75,fit:'cover',codeHeight:500});selected=id;save();draw();}));
+ b.append(sel,position,button('Add section',()=>{const type=sel.value,id=type+'-'+crypto.randomUUID().slice(0,8);data.sections.splice(Number(position.value),0,{type,id,title:type==='custom'?'':type==='collection'?'Trending projects in Siliguri':captions[type],text:'',url:'',button:'',mode:'image',height:85,mobileHeight:75,fit:'cover',codeHeight:500});selected=id;filter='';save();draw();}));
 }
 function projects(panel){
  panel.append(el('h1','Projects'));
  const actions=el('div','','actions');panel.append(actions);
- const pick=el('select');pick.setAttribute('aria-label','Choose project');
+ const pick=el('select');pick.setAttribute('aria-label','Choose project');pick.dataset.tip='Select the property whose details you want to edit and preview.';
  for(const p of data.projects)pick.add(new Option(p.name,p.slug));
  const p=data.projects.find(p=>p.slug===selected)||data.projects[0];if(p)pick.value=p.slug;
  pick.onchange=()=>{selected=pick.value;draw();};actions.append(pick,button('Add project',()=>{
@@ -200,29 +217,70 @@ function projects(panel){
  const c=box(panel,'Custom project page');field(c,'Page layout',p,'layout',{choices:[['standard','Project details, then optional custom content'],['custom','My custom page with enquiry buttons']]});codeFields(c,p);
  const z=box(panel,'Remove project');z.append(button('Remove this project',()=>{if(!confirm('Remove '+p.name+'? Its page will be removed on publish.'))return;data.projects.splice(data.projects.indexOf(p),1);for(const item of [...data.sections,...data.projects])if(item.cards)item.cards=item.cards.filter(card=>card.slug!==p.slug);selected='';save();draw();},'danger'));
 }
-function go(name){tab=name;selected='';draw();window.scrollTo(0,0);}
+function go(name){tab=name;selected='';filter='';pickMode=false;mobilePane(false);draw();window.scrollTo(0,0);}
 function draw(){
  $('#connection').textContent=repo?'Signed in · True Homes':'Owner dashboard';
  const nav=$('#tabs');nav.replaceChildren();for(const t of tabs){const b=button(t,()=>go(t));b.setAttribute('aria-current',String(t===tab));nav.append(b);}
  const panel=$('#panel');panel.replaceChildren();
  document.body.classList.toggle('signed-out',!repo);
  $('#login').hidden=Boolean(repo);
- if(!repo){nav.replaceChildren();return;}
+ if(!repo){nav.replaceChildren();$('#canvas').hidden=true;$('#live').src='about:blank';canvasHTML='';return;}
  [overview,brand,homepage,projects,appearance][tabs.indexOf(tab)](panel);
+ $('.mobile-switch').hidden=tab==='Overview';$('#canvas').hidden=tab==='Overview';$('.workspace').classList.toggle('dashboard',tab==='Overview');$('#inspect').hidden=tab!=='Homepage';$('#inspect').setAttribute('aria-pressed',String(pickMode));queueCanvas(0);
 }
+function previewDocument(page,canvas){
+ const root=new URL('../',location.href).href;
+ let html=render(data,page,path=>urls.get(path)||new URL(path,root).href)
+   .replace('<head>','<head><base href="'+root+'">').replace('<body>','<body data-preview>');
+ if(canvas)html=html.replace('href="store.css"','href="'+root+'store.css"').replace('src="store.js"','src="'+root+'store.js"').replace('</body>','<script src="'+root+'admin/inspector.js"></script></body>');
+ return html;
+}
+function currentPage(){return tab==='Projects'?(data.projects.find(p=>p.slug===selected)||data.projects[0])?.slug||'index':'index';}
+function sendView(scroll){if(canvasReady)$('#live').contentWindow.postMessage({type:'editor-view',id:tab==='Homepage'?selected:'',select:tab==='Homepage'&&pickMode,scroll},location.origin);}
+function queueCanvas(delay=420){
+ clearTimeout(canvasTimer);
+ if(!repo||$('#canvas').hidden)return;
+ canvasTimer=setTimeout(()=>{
+  if(!repo||$('#canvas').hidden)return;
+  const html=previewDocument(currentPage(),true);
+  if(html===canvasHTML){sendView(false);return;}
+  canvasHTML=html;canvasReady=false;if($('#live').getAttribute('src')==='canvas.html')$('#live').contentWindow.postMessage({html},location.origin);else $('#live').src='canvas.html';
+ },delay);
+}
+window.addEventListener('message',event=>{
+ if(event.origin!==location.origin||event.source!==$('#live').contentWindow||!repo||$('#canvas').hidden)return;
+ 
+ if(event.data==='true-homes-preview-ready'){event.source.postMessage({html:canvasHTML},location.origin);return;}
+ if(event.data?.type==='editor-mounted'){canvasReady=true;sendView(true);return;}
+ if(event.data?.type==='editor-select'&&pickMode&&tab==='Homepage'&&data.sections.some(s=>s.id===event.data.id)){
+  selected=event.data.id;filter='';pickMode=false;mobilePane(false);draw();
+  const card=[...document.querySelectorAll('[data-section]')].find(el=>el.dataset.section===selected);
+  card?.querySelector('summary')?.focus({preventScroll:true});card?.scrollIntoView({block:'nearest'});return;
+ }
+ const page=event.data?.previewPage;
+ if(page==='index')go('Homepage');else if(data.projects.some(p=>p.slug===page)){tab='Projects';selected=page;pickMode=false;draw();}
+});
+$('#inspect').onclick=()=>{pickMode=!pickMode;$('#inspect').setAttribute('aria-pressed',String(pickMode));sendView(false);};
+function mobilePane(canvas){$('.workspace').classList.toggle('canvas-on',canvas);$('#show-settings').setAttribute('aria-pressed',String(!canvas));$('#show-canvas').setAttribute('aria-pressed',String(canvas));}
+$('#show-settings').onclick=()=>mobilePane(false);$('#show-canvas').onclick=()=>mobilePane(true);
+function device(phone){$('#live').classList.toggle('phone-canvas',phone);$('#wide').setAttribute('aria-pressed',String(!phone));$('#narrow').setAttribute('aria-pressed',String(phone));}
+$('#wide').onclick=()=>device(false);$('#narrow').onclick=()=>device(true);
+for(const id of ['inspect','wide','narrow','preview','publish','phone','desktop','close-preview']){
+ const button=$('#'+id);button.dataset.tip=actionHelp(button.textContent);
+}
+$('#preview-page').dataset.tip='Choose which draft page you want to preview.';
+enableHelp();
 let previewHTML='';
 function updateFrame(){
  const page=$('#preview-page').value;
- const root=new URL('../',location.href).href;
- previewHTML=render(data,page,path=>urls.get(path)||new URL(path,root).href)
-   .replace('<head>','<head><base href="'+root+'">').replace('<body>','<body data-preview>');
- $('#frame').src='../preview.html?view='+crypto.randomUUID();
+ previewHTML=previewDocument(page,false);
+ if($('#frame').getAttribute('src')==='canvas.html')$('#frame').contentWindow.postMessage({html:previewHTML},location.origin);else $('#frame').src='canvas.html';
 }
 $('#preview').onclick=()=>{if(!repo){$('#user').focus();return;}const sel=$('#preview-page');sel.replaceChildren(new Option('Homepage','index'));for(const p of data.projects)sel.add(new Option(p.name,p.slug));sel.value=tab==='Projects'?(data.projects.find(p=>p.slug===selected)||data.projects[0])?.slug||'index':'index';updateFrame();$('#viewer').showModal();};
 window.addEventListener('message',event=>{
  const frame=$('#frame');
- if(event.source!==frame.contentWindow||!$('#viewer').open)return;
- if(event.data==='true-homes-preview-ready'){frame.contentWindow.postMessage({html:previewHTML},'*');return;}
+ if(event.origin!==location.origin||event.source!==frame.contentWindow||!$('#viewer').open)return;
+ if(event.data==='true-homes-preview-ready'){frame.contentWindow.postMessage({html:previewHTML},location.origin);return;}
  if(!event.data?.previewPage)return;
  const page=event.data.previewPage;
  if(page==='index'||data.projects.some(p=>p.slug===page)){$('#preview-page').value=page;updateFrame();}
