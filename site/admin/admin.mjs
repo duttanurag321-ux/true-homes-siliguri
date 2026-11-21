@@ -11,10 +11,34 @@ const note=text=>{ $('#status').textContent=text;if(!repo)$('#login-error').text
 function el(tag,text='',cls=''){const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;}
 function button(text,fn,cls){const b=el('button',text,cls);b.type='button';b.onclick=fn;if(text==='↑'||text==='↓')b.setAttribute('aria-label',text==='↑'?'Move earlier':'Move later');if(actionHelp(text))b.dataset.tip=actionHelp(text);return b;}
 function box(parent,title){const b=el('div','','box');if(title)b.append(el('h2',title));parent.append(b);return b;}
+// Compare editor defaults consistently for older content and restored drafts.
+function snapshot(value){
+ const sections=value.sections.map(s=>({...s,values:s.values||{},...(s.type==='help'?{actions:s.actions||[]}:{} )}));
+ const projects=value.projects.map(p=>({...p,values:p.values||{}}));
+ return JSON.stringify({...value,appearance:{...visualDefaults,...value.appearance},sections,projects},(_,v)=>{
+  if(v && typeof v==='object' && !Array.isArray(v))return Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]]));
+  return v;
+ });
+}
+let baseline=null,baselineText='';
+function changed(){
+ if(!data||!original)return false;
+ if(baseline!==original){baseline=original;baselineText=snapshot(original);}
+ return snapshot(data)!==baselineText||pending.size>0;
+}
+function updatePublish(){
+ $('#publish').disabled=!repo||!head||busy||!changed();
+}
+function syncFavicon(){
+ const icon=$('#admin-icon'),path=data?.favicon||'assets/favicon.png';
+ const href=urls.get(path)||new URL(path,new URL('../',location.href)).href;
+ if(icon.href!==href)icon.href=href;
+}
 function save(){
   queueCanvas();
   const paths=JSON.stringify(data);
   for(const path of pending.keys())if(!paths.includes(JSON.stringify(path))){pending.delete(path);URL.revokeObjectURL(urls.get(path));urls.delete(path);}
+  updatePublish();syncFavicon();
   const snap=structuredClone({data,original,pending});
   draftWrites=draftWrites.then(()=>new Promise((resolve,reject)=>{
     const tx=db.transaction('draft','readwrite');tx.objectStore('draft').put(snap,'current');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
@@ -25,8 +49,14 @@ function field(parent,label,obj,key,opts={}){
  if(opts.choices)for(const [value,name] of opts.choices)input.add(new Option(name,value));
  if(opts.num){input.type='number';input.min=opts.num[0];input.max=opts.num[1];}
  if(opts.code)input.className='code';
+ const hadValue=Object.hasOwn(obj,key);
  input.value=obj[key]??opts.defaultValue??'';if(opts.placeholder)input.placeholder=opts.placeholder;
- input.oninput=()=>{obj[key]=opts.num && input.value!==''?Number(input.value):input.value;queueCanvas();};
+ const initialInput=input.value;
+ input.oninput=()=>{
+   if(!hadValue && input.value===initialInput)delete obj[key];
+   else obj[key]=opts.num && input.value!==''?Number(input.value):input.value;
+   updatePublish();queueCanvas();
+ };
  input.onchange=()=>{save();if(opts.refresh)draw();else if(key==='title'&&parent.dataset.section){parent.querySelector('.section-name').textContent=obj.title||captions[obj.type];parent.dataset.search=((obj.title||'')+' '+captions[obj.type]).toLowerCase();}};
  wrap.append(input);parent.append(wrap);attachHelp(wrap,input,label,fieldHelp(label,key));return input;
 }
@@ -219,6 +249,7 @@ function projects(panel){
 }
 function go(name){tab=name;selected='';filter='';pickMode=false;mobilePane(false);draw();window.scrollTo(0,0);}
 function draw(){
+ updatePublish();syncFavicon();
  $('#connection').textContent=repo?'Signed in · True Homes':'Owner dashboard';
  const nav=$('#tabs');nav.replaceChildren();for(const t of tabs){const b=button(t,()=>go(t));b.setAttribute('aria-current',String(t===tab));nav.append(b);}
  const panel=$('#panel');panel.replaceChildren();
@@ -289,10 +320,10 @@ $('#preview-page').onchange=updateFrame;$('#phone').onclick=()=>$('#frame').clas
 async function resume(){
  const live=await repository.load();
  repo=repository;
- if(JSON.stringify(live.data)!==JSON.stringify(original) && JSON.stringify(data)!==JSON.stringify(original)){
+ if(snapshot(live.data)!==snapshot(original) && changed()){
    head=null;draw();note('Your draft is based on an older version. Download it under Draft tools, then discard and reload before publishing.');return;
  }
- if(JSON.stringify(data)===JSON.stringify(original)){data=live.data;original=structuredClone(data);}
+ if(!changed()){data=live.data;original=structuredClone(data);}
  head=live.sha;save();draw();note('Signed in. Draft changes stay on this device until you publish.');
 }
 
@@ -302,19 +333,19 @@ $('#credentials').onsubmit=async event=>{
  catch(e){$('#login-error').textContent=e.message;}finally{$('#connect').disabled=false;}
 };
 $('#publish').onclick=async()=>{
- if(busy)return;if(!repo){$('#user').focus();return;}
- try{validate(data);if(!confirm('Publish these changes to the True Homes production branch?'))return;busy=true;document.querySelector('.shell').inert=true;
+ if(busy||!repo||!head||!changed())return;
+ try{validate(data);if(!confirm('Publish these changes to the True Homes production branch?'))return;busy=true;updatePublish();document.querySelector('.shell').inert=true;
   if(!head)throw Error('Download your draft and reload the latest version in Draft tools.');
   head=await repo.publish(head,data,pending,note);original=structuredClone(data);pending.clear();save();
   note('Saved to GitHub. Cloudflare will update the live site after its connected build succeeds.');draw();
- }catch(e){if(e.status===401){repo=null;draw();$('#user').focus();}note(e.message);}finally{busy=false;document.querySelector('.shell').inert=false;}
+ }catch(e){if(e.status===401){repo=null;draw();$('#user').focus();}note(e.message);}finally{busy=false;updatePublish();document.querySelector('.shell').inert=false;}
 };
 async function publicData(){const res=await fetch('../content.json',{cache:'no-store'});if(!res.ok)throw Error('Cannot read site/content.json. Check the upload folder.');return res.json();}
 async function start(){
  data=await publicData();original=structuredClone(data);
  db=await new Promise((res,rej)=>{const req=indexedDB.open('true-homes-editor-v1',1);req.onupgradeneeded=()=>req.result.createObjectStore('draft');req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error);});
  const draft=await new Promise((res,rej)=>{const req=db.transaction('draft').objectStore('draft').get('current');req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error);});
- if(draft && (JSON.stringify(draft.data)!==JSON.stringify(draft.original)||draft.pending.size)){({data,original,pending}=draft);for(const [path,file]of pending)urls.set(path,URL.createObjectURL(file));}
+ if(draft && (snapshot(draft.data)!==snapshot(draft.original)||draft.pending.size)){({data,original,pending}=draft);for(const [path,file]of pending)urls.set(path,URL.createObjectURL(file));}
  draw();try{await resume();}catch(e){note(e.status===401?'Sign in to open the website editor.':e.message);}
 }
 start().catch(e=>note('Editor could not start. Open /admin/ on the hosted site in a browser with local storage enabled. '+e.message));
