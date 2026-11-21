@@ -83,28 +83,24 @@ export function attachHelp(container,control,title,message){
  const row=document.createElement('div');row.className='setting-wrap';
  container.before(row);row.append(container);
  const description=document.createElement('span');description.className='visually-hidden';description.id='help-'+(++count);description.textContent=message;
- const trigger=document.createElement('button');trigger.type='button';trigger.className='help-trigger';trigger.textContent='?';trigger.setAttribute('aria-label','Help with '+title);trigger.setAttribute('aria-describedby',description.id);
+ const trigger=document.createElement('button');trigger.type='button';trigger.className='help-trigger';trigger.textContent='?';trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-label','Help with '+title);trigger.setAttribute('aria-describedby',description.id);
  row.dataset.tip=message;row.append(trigger,description);control.setAttribute('aria-describedby',description.id);
 }
 export function enableHelp(){
  const tip=document.createElement('div');tip.id='setting-tip';tip.hidden=true;tip.setAttribute('aria-hidden','true');document.body.append(tip);
- let active=null,pinned=false;
- function hide(){active=null;pinned=false;tip.hidden=true;}
- function target(node){return node instanceof Element?node.closest('[data-tip]'):null;}
- function show(anchor){
-  if(!anchor?.dataset.tip){hide();return;}
-  active=anchor;
-  const host=anchor.closest('dialog[open]')||document.body;if(tip.parentElement!==host)host.append(tip);
-  tip.textContent=anchor.dataset.tip;tip.hidden=false;
-  const rect=anchor.getBoundingClientRect(),box=tip.getBoundingClientRect();
+ let active=null;
+ function hide(){active?.setAttribute('aria-expanded','false');active=null;tip.hidden=true;}
+ document.addEventListener('click',event=>{
+  const trigger=event.target.closest('.help-trigger');
+  const wasOpen=trigger===active;hide();
+  if(!trigger||wasOpen)return;
+  active=trigger;trigger.setAttribute('aria-expanded','true');
+  const host=trigger.closest('dialog[open]')||document.body;if(tip.parentElement!==host)host.append(tip);
+  tip.textContent=trigger.closest('[data-tip]').dataset.tip;tip.hidden=false;
+  const rect=trigger.getBoundingClientRect(),box=tip.getBoundingClientRect();
   tip.style.left=Math.max(8,Math.min(rect.left,innerWidth-box.width-8))+'px';
   tip.style.top=(rect.bottom+box.height+8<innerHeight?rect.bottom+5:Math.max(6,rect.top-box.height-5))+'px';
- }
- document.addEventListener('pointerover',e=>{if(e.pointerType==='mouse'&&!pinned){const a=target(e.target);if(a!==active)show(a);}});
- document.addEventListener('pointerout',e=>{if(!pinned&&active&&!active.contains(e.relatedTarget))hide();});
- document.addEventListener('focusin',e=>{pinned=false;show(target(e.target));});
- document.addEventListener('focusout',()=>{if(!pinned)hide();});
- document.addEventListener('click',e=>{if(e.target.closest('.help-trigger')){const a=target(e.target);if(pinned&&a===active)hide();else{show(a);pinned=true;}}else hide();});
+ });
  document.addEventListener('keydown',e=>{if(e.key==='Escape')hide();});
  window.addEventListener('resize',hide);document.addEventListener('scroll',hide,true);
 }
