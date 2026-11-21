@@ -162,7 +162,7 @@
     "accent": "#8d929a",
     "heading": "modern",
     "motion": "standard",
-    "speed": "slow",
+    "speed": "normal",
     "slides": "auto",
     "interval": 5,
     "header": "scroll",
