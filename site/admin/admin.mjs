@@ -1,3 +1,4 @@
+import {sizingGroups} from './sizing.mjs';
 import {fieldHelp,actionHelp,attachHelp,enableHelp} from './help.mjs';
 import {sectionSlots} from './sections.mjs';
 import {render,validate,visualDefaults} from './render.mjs';
@@ -104,28 +105,46 @@ function overview(panel){
  pub.append(button('Sign out',async()=>{try{await request('logout',{});repo=null;head=null;go('Overview');note('Signed out.');}catch(e){note(e.message);}}));
  const util=box(panel,'Draft tools');util.append(button('Download content JSON',()=>{const a=el('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='true-homes-content.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);}),el('p','The download contains text and file paths. New media stay in this browser until published.','hint'),button('Discard draft and reload latest',async()=>{if(!confirm('Discard this device’s draft and its unpublished uploads?'))return;try{const live=repo?await repo.load():{data:await publicData()};data=live.data;original=structuredClone(data);head=live.sha||null;for(const u of urls.values())URL.revokeObjectURL(u);urls.clear();pending.clear();save();draw();note('Latest version loaded.');}catch(e){note(e.message);}}));
 }
+function sizeSlider(parent, settings, key, label, min, max, unit, help){
+ const row=el('label',label,'field size-slider');
+ const input=el('input'), value=el('span');
+ input.type='range';input.min=min;input.max=max;input.value=settings[key];
+ const updateLabel=()=>{value.textContent=input.value+unit;input.setAttribute('aria-valuetext',value.textContent);};
+ updateLabel();
+ input.oninput=()=>{settings[key]=Number(input.value);updateLabel();updatePublish();queueCanvas();};
+ input.onchange=save;
+ row.append(value,input);parent.append(row);attachHelp(row,input,label,help);
+}
 function appearance(panel){
  panel.append(el('h1','Appearance'));
  const a=data.appearance={...visualDefaults,...data.appearance};
+ for(const [name,options] of Object.entries(sizingGroups)){
+  const group=box(panel,name);
+  for(const [key,label,min,max,help] of options)sizeSlider(group,a,key,label,min,max,'%',help+' 100% is the original size.');
+  group.append(button('Reset '+name.toLowerCase(),()=>{
+   for(const [key] of options)a[key]=visualDefaults[key];
+   save();draw();
+  }));
+ }
  const glass=box(panel,'Glass surfaces');
  glass.append(el('p','Adjust the header, menus, buttons and floating controls. Use Preview to check the result over your own project photos.'));
- field(glass,'Frost / blur (0–40 px)',a,'blur',{num:[0,40]});
- field(glass,'Dark tint (20–88%)',a,'tint',{num:[20,88]});
- field(glass,'Corner radius (0–36 px)',a,'radius',{num:[0,36]});
+ sizeSlider(glass,a,'blur','Frost / blur',0,40,' px',fieldHelp('Frost / blur','blur'));
+ sizeSlider(glass,a,'tint','Dark tint',20,88,'%',fieldHelp('Dark tint','tint'));
+ sizeSlider(glass,a,'radius','Corner radius',0,36,' px',fieldHelp('Corner radius','radius'));
  field(glass,'Glass highlight colour',a,'accent').type='color';
  field(glass,'Heading style',a,'heading',{choices:[['modern','Modern sans serif'],['serif','Classic serif'],['wide','Wide sans serif']]});
  const motion=box(panel,'Animation and scrolling');
  field(motion,'Page effects',a,'motion',{choices:[['standard','Cinematic movement'],['subtle','Gentle fades'],['still','Still — no automatic motion']]});
  field(motion,'Transition speed',a,'speed',{choices:[['fast','Fast'],['normal','Normal'],['slow','Slow']]});
  field(motion,'Project slides',a,'slides',{choices:[['auto','Automatic'],['manual','Swipe or use arrows']]});
- field(motion,'Seconds between automatic slides (2–20)',a,'interval',{num:[2,20]});
+ sizeSlider(motion,a,'interval','Seconds between automatic slides',2,20,' s',fieldHelp('Seconds between automatic slides','interval'));
  field(motion,'Header behaviour',a,'header',{choices:[['scroll','Hide on scroll down'],['fixed','Always visible']]});
  const layout=box(panel,'Typography and layout');
  field(layout,'Heading capitalization',a,'letterCase',{choices:[['uppercase','Uppercase'],['none','As written']]});
  field(layout,'Heading weight',a,'weight',{choices:[['380','Light'],['500','Medium'],['700','Bold']]});
- field(layout,'Body text size (14–22 px)',a,'bodySize',{num:[14,22]});
+ sizeSlider(layout,a,'bodySize','Body text size',14,22,' px',fieldHelp('Body text size','bodySize'));
  field(layout,'Hero text alignment',a,'heroAlign',{choices:[['left','Left'],['center','Center'],['right','Right']]});
- field(layout,'Hero image shading (0–100%)',a,'shade',{num:[0,100]});
+ sizeSlider(layout,a,'shade','Hero image shading',0,100,'%',fieldHelp('Hero image shading','shade'));
  field(layout,'Page background',a,'background').type='color';
  field(layout,'Default text colour',a,'foreground').type='color';
  const identity=box(panel,'Browser tab icon');

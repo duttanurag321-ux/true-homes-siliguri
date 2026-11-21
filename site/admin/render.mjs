@@ -1,3 +1,4 @@
+import {sizeDefaults,sizeVariables} from './sizing.mjs';
 import {customFrame,layoutStyle,projectCards,cardCSS} from './sections.mjs';
 export const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function link(value) {
@@ -113,7 +114,7 @@ function detail(p,d,r){
  '<section class="detail-chapter"><h2>Project details</h2><dl>'+facts.map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+button('Open Google Maps ↗',link(p.maps),'glass-action')+'</section>'+plans+
  (p.code?customFrame(p,d,r,visualSettings(d)):'')+'<section class="detail-chapter interest"><h2>Register your interest</h2>'+button('Book a site visit',visit,'glass-action')+'</section></article>';
 }
-export const visualDefaults=Object.freeze({blur:20,tint:46,radius:18,accent:'#d5dfef',heading:'modern',motion:'standard',speed:'normal',slides:'auto',interval:6,header:'scroll',letterCase:'uppercase',weight:380,bodySize:16,heroAlign:'left',shade:100,background:'#050505',foreground:'#fafafa'});
+export const visualDefaults=Object.freeze({...sizeDefaults,blur:20,tint:46,radius:18,accent:'#d5dfef',heading:'modern',motion:'standard',speed:'normal',slides:'auto',interval:6,header:'scroll',letterCase:'uppercase',weight:380,bodySize:16,heroAlign:'left',shade:100,background:'#050505',foreground:'#fafafa'});
 function visualSettings(d){
  const a={...visualDefaults,...d.appearance};
  function number(key,min,max){
@@ -122,7 +123,7 @@ function visualSettings(d){
  }
  const accent=/^#[0-9a-f]{6}$/i.test(a.accent)?a.accent:visualDefaults.accent;
  const color=key=>/^#[0-9a-f]{6}$/i.test(a[key])?a[key]:visualDefaults[key];
- const layout='--page-bg:'+color('background')+';--page-ink:'+color('foreground')+';--body-size:'+number('bodySize',14,22)+'px;--heading-case:'+(a.letterCase==='none'?'none':'uppercase')+';--heading-weight:'+number('weight',300,800)+';--hero-align:'+(['left','right','center'].includes(a.heroAlign)?a.heroAlign:'left')+';--hero-shade:'+number('shade',0,100)/100+';';
+ const layout=sizeVariables(a)+'--page-bg:'+color('background')+';--page-ink:'+color('foreground')+';--body-size:'+number('bodySize',14,22)+'px;--heading-case:'+(a.letterCase==='none'?'none':'uppercase')+';--heading-weight:'+number('weight',300,800)+';--hero-align:'+(['left','right','center'].includes(a.heroAlign)?a.heroAlign:'left')+';--hero-shade:'+number('shade',0,100)/100+';';
  const speed=({fast:0.65,normal:1,slow:1.5})[a.speed]||1;
  const align=['left','right','center'].includes(a.heroAlign)?a.heroAlign:'left';
  return 'data-hero-align="'+align+'" data-motion="'+(a.motion==='still'?'still':a.motion==='subtle'?'subtle':'standard')+'" data-auto="'+(a.slides!=='manual')+'" data-interval="'+number('interval',2,20)+'" data-header="'+(a.header==='fixed'?'fixed':'scroll')+'" style="'+layout+'--glass-blur:'+number('blur',0,40)+'px;--glass-tint:'+number('tint',20,88)+'%;--glass-radius:'+number('radius',0,36)+'px;--glass-accent:'+accent+';--motion-time:'+Math.round(450*speed)+'ms;--title-font:'+(a.heading==='serif'?'Georgia,serif':a.heading==='wide'?'Verdana,sans-serif':'Arial,sans-serif')+'"';

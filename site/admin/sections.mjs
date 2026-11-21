@@ -26,10 +26,10 @@ export function projectCards(section,data,resolve){
  return '<div class="th-project-grid">'+cards+'</div>';
 }
 export const cardCSS=`
-.th-project-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:clamp(18px,3vw,42px)}
+.th-project-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,calc(260px * var(--size-cardWidth,1))),1fr));gap:calc(clamp(18px,3vw,42px) * var(--size-cardGap,1))}
 .th-project-card{display:grid;align-content:start;gap:.35em;color:inherit;text-decoration:none;min-width:0}
-.th-project-card img,.th-card-placeholder{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;background:linear-gradient(135deg,#303438,#131518);margin-bottom:.65em}
-.th-project-card strong{font:500 clamp(1.2rem,2.5vw,2rem)/1.18 var(--title-font,Arial,sans-serif)}
+.th-project-card img,.th-card-placeholder{display:block;width:100%;aspect-ratio:3 / calc(2 * var(--size-cardHeight,1));object-fit:cover;background:linear-gradient(135deg,#303438,#131518);margin-bottom:.65em}
+.th-project-card strong{font:500 calc(clamp(1.2rem,2.5vw,2rem) * var(--size-projectTitle,1))/1.18 var(--title-font,Arial,sans-serif)}
 .th-project-card small{font-size:.95rem;opacity:.78}
 .th-project-card:focus-visible{outline:2px solid currentColor;outline-offset:3px}`;
 const fitScript=`
